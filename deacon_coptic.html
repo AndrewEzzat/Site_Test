@@ -200,14 +200,14 @@
         </div>
     </div>
 
+    <!-- Load Shared Deacons Config -->
+    <script src="deacons-config.js"></script>
     <script>
-        // REPLACE THIS with your actual Google Apps Script Web App URL
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw4g6bk2OI-PTGfpJdV129HWq0wITmzPR46QZkj91j6C0opW2rPyLC8HbD98MzR9zNG/exec";
-
         async function fetchCopticFiles() {
             const sidebar = document.getElementById('sidebarItems');
             try {
-                const response = await fetch(`${WEB_APP_URL}?action=getCopticFiles`);
+                // Fetch dynamically using DEACON_CONFIG from deacons-config.js
+                const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getCopticFiles`);
                 const data = await response.json();
 
                 if (data.status === "success" && data.files.length > 0) {
@@ -227,7 +227,7 @@
                 }
             } catch (error) {
                 console.error("Error fetching files:", error);
-                sidebar.innerHTML = '<h3>ملفات المنهج</h3><p class="loading-text" style="color:red;">فشل جلب الملفات. تأكد من رابط الـ Web App.</p>';
+                sidebar.innerHTML = '<h3>ملفات المنهج</h3><p class="loading-text" style="color:red;">فشل جلب الملفات. تأكد من رابط الـ Web App في deacons-config.js.</p>';
             }
         }
 
