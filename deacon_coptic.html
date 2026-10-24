@@ -54,131 +54,12 @@
             text-decoration: none;
         }
 
-        /* Subheader Tabs for Primary / Prep */
-        .stage-tabs {
-            background: #f1f5f9;
-            padding: 8px 20px;
-            display: flex;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .stage-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 16px;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text-muted);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .stage-btn.active {
-            background: var(--primary);
-            color: #ffffff;
-        }
-
-        /* Main Container */
-        .main-container {
-            display: flex;
-            flex: 1;
-            height: calc(100vh - 110px);
-            overflow: hidden;
-        }
-
-        /* Sidebar for Levels */
-        .sidebar {
-            width: 280px;
-            background: #ffffff;
-            border-left: 1px solid var(--border);
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
-        }
-
-        .sidebar h3 {
-            font-size: 15px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            padding-right: 4px;
-        }
-
-        .level-btn {
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            padding: 12px 16px;
-            border-radius: 10px;
-            text-align: right;
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-main);
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .level-btn:hover {
-            background: var(--primary-light);
-            border-color: var(--primary);
-        }
-
-        .level-btn.active {
-            background: var(--primary);
-            color: #ffffff;
-            border-color: var(--primary);
-        }
-
-        /* Content Viewer Area */
-        .viewer-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: #e2e8f0;
-            position: relative;
-        }
-
-        .viewer-toolbar {
-            background: #ffffff;
-            padding: 10px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .viewer-toolbar h4 {
-            font-size: 16px;
-            color: var(--text-main);
-        }
-
-        .download-btn {
-            background: #16a34a;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 6px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-
-        .download-btn:hover {
-            background: #15803d;
-        }
-
-        .iframe-container {
+        /* Container for the Drive embed frame */
+        .drive-container {
             flex: 1;
             width: 100%;
-            height: 100%;
+            height: calc(100vh - 61px);
+            background: #ffffff;
         }
 
         iframe {
@@ -192,102 +73,15 @@
 
     <!-- Header -->
     <div class="header">
-        <a href="index.html" class="back-btn">🏠 الرئيسية</a>
+        <a href="deacons.html" class="back-btn">⬅ عودة لقسم الشمامسة</a>
         <h2 style="font-size: 16px; color: var(--primary);">مناهج اللغة القبطية</h2>
         <div></div>
     </div>
 
-    <!-- Stage Subheader Tabs (Primary & Preparatory) -->
-    <div class="stage-tabs">
-        <button class="stage-btn active" onclick="switchStage('primary', this)">📁 المرحلة الابتدائية</button>
-        <button class="stage-btn" onclick="switchStage('preparatory', this)">📁 المرحلة الإعدادية</button>
+    <!-- Embedded Google Drive Folder View -->
+    <div class="drive-container">
+        <iframe src="https://drive.google.com/embeddedfolderview?id=1vJY6ni57Unq1rxJCvQDbG6LEkA_ZeBuL#grid"></iframe>
     </div>
-
-    <!-- Main View -->
-    <div class="main-container">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar" id="sidebarLevels">
-            <!-- Dynamically populated level buttons -->
-        </div>
-
-        <!-- PDF Viewer & Download Area -->
-        <div class="viewer-area">
-            <div class="viewer-toolbar">
-                <h4 id="fileTitle">اختر ملفاً</h4>
-                <a id="downloadLink" href="#" class="download-btn" target="_blank">
-                    📥 تحميل الملف
-                </a>
-            </div>
-            <div class="iframe-container">
-                <iframe id="pdfViewer" src=""></iframe>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Define data structure for stages and their files
-        const stagesData = {
-            primary: [
-                { name: 'Level 1.pdf', id: '1hNQhDZod_koQ5jvqH6gKZtsHHLjiYXkg' },
-                { name: 'Level 2.pdf', id: '1-i7UAyuiL0k0_UgcIptI73-TKcxbMkkm' },
-                { name: 'Level 3.pdf', id: '1TB1lzt-QDLdWAQUUKFDBSCRNJ_XvlHC8' },
-                { name: 'Level 4.pdf', id: '1YznU-7gRIwpXSocXgm_gmLaRjJWtLygc' }
-            ],
-            preparatory: [
-                // Add preparatory files here later when needed using the same structure:
-                // { name: 'Prep Level 1.pdf', id: 'YOUR_FILE_ID_HERE' }
-            ]
-        };
-
-        let currentStageKey = 'primary';
-
-        function switchStage(stageKey, btnElement) {
-            document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-            currentStageKey = stageKey;
-            renderSidebar();
-        }
-
-        function renderSidebar() {
-            const sidebar = document.getElementById('sidebarLevels');
-            const files = stagesData[currentStageKey];
-
-            if (!files || files.length === 0) {
-                sidebar.innerHTML = '<h3>المستويات الدراسية</h3><p style="color:var(--text-muted); font-size:13px; padding:10px;">لا توجد ملفات مضافة لهذه المرحلة بعد.</p>';
-                document.getElementById('fileTitle').innerText = 'لا توجد ملفات';
-                document.getElementById('pdfViewer').src = '';
-                document.getElementById('downloadLink').style.display = 'none';
-                return;
-            }
-
-            document.getElementById('downloadLink').style.display = 'inline-flex';
-            let html = '<h3>المستويات الدراسية</h3>';
-            files.forEach((file, index) => {
-                const activeClass = index === 0 ? 'active' : '';
-                html += `<button class="level-btn ${activeClass}" onclick="loadPdf('${file.name}', '${file.id}', this)">
-                            <span>${file.name}</span> 📄
-                         </button>`;
-            });
-            sidebar.innerHTML = html;
-
-            // Load the first file by default
-            loadPdf(files[0].name, files[0].id, sidebar.querySelector('.level-btn'));
-        }
-
-        function loadPdf(fileName, fileId, btnElement) {
-            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
-            if (btnElement) btnElement.classList.add('active');
-
-            document.getElementById('fileTitle').innerText = fileName;
-            document.getElementById('pdfViewer').src = `https://drive.google.com/file/d/${fileId}/preview`;
-            document.getElementById('downloadLink').href = `https://drive.google.com/uc?export=download&id=${fileId}`;
-        }
-
-        // Initialize on load
-        window.onload = function() {
-            renderSidebar();
-        };
-    </script>
 
 </body>
 </html>
