@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مناهج الألحان - مدرسة الشمامسة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Header */
+        .header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-btn {
+            background: #e2e8f0;
+            color: var(--text-main);
+            border: none;
+            padding: 8px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Subheader Tabs for Categories/Stages */
+        .stage-tabs {
+            background: #f1f5f9;
+            padding: 8px 20px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stage-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 16px;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stage-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 110px);
+            overflow: hidden;
+        }
+
+        /* Sidebar for Items */
+        .sidebar {
+            width: 280px;
+            background: #ffffff;
+            border-left: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding-right: 4px;
+        }
+
+        .item-btn {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 10px;
+            text-align: right;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .item-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-color: var(--primary);
+        }
+
+        /* Content Viewer Area */
+        .viewer-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #e2e8f0;
+            position: relative;
+        }
+
+        .viewer-toolbar {
+            background: #ffffff;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .viewer-toolbar h4 {
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        .download-btn {
+            background: #16a34a;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .download-btn:hover {
+            background: #15803d;
+        }
+
+        .iframe-container {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <a href="deacons.html" class="back-btn">⬅ عودة لقسم الشمامسة</a>
+        <h2 style="font-size: 16px; color: var(--primary);">مكتبة ومناهج الألحان</h2>
+        <div></div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="stage-tabs">
+        <button class="stage-btn active" onclick="switchCategory('hymns_primary', this)">📁 ألحان ابتدائي</button>
+        <button class="stage-btn" onclick="switchCategory('hymns_prep', this)">📁 ألحان إعدادي</button>
+    </div>
+
+    <!-- Main View -->
+    <div class="main-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebarItems">
+            <!-- Dynamically populated buttons -->
+        </div>
+
+        <!-- Viewer & Download Area -->
+        <div class="viewer-area">
+            <div class="viewer-toolbar">
+                <h4 id="fileTitle">اختر ملفاً</h4>
+                <a id="downloadLink" href="#" class="download-btn" target="_blank">
+                    📥 تحميل الملف
+                </a>
+            </div>
+            <div class="iframe-container">
+                <iframe id="pdfViewer" src=""></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modular Data Structure for Hymns (Easily add or edit items here)
+        const hymnsData = {
+            hymns_primary: [
+                // Example structure - replace IDs with your actual Hymns PDF file IDs from Drive
+                { name: 'لحن البصخة - ابتدائي', id: '1vJY6ni57Unq1rxJCvQDbG6LEkA_ZeBuL' } 
+            ],
+            hymns_prep: [
+                // Add preparatory hymns files here
+            ]
+        };
+
+        let currentCategory = 'hymns_primary';
+
+        function switchCategory(categoryKey, btnElement) {
+            document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            currentCategory = categoryKey;
+            renderSidebar();
+        }
+
+        function renderSidebar() {
+            const sidebar = document.getElementById('sidebarItems');
+            const files = hymnsData[currentCategory];
+
+            if (!files || files.length === 0) {
+                sidebar.innerHTML = '<h3>قائمة الألحان</h3><p style="color:var(--text-muted); font-size:13px; padding:10px;">لا توجد ملفات مضافة في هذا القسم بعد.</p>';
+                document.getElementById('fileTitle').innerText = 'لا توجد ملفات';
+                document.getElementById('pdfViewer').src = '';
+                document.getElementById('downloadLink').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('downloadLink').style.display = 'inline-flex';
+            let html = '<h3>قائمة الألحان</h3>';
+            files.forEach((file, index) => {
+                const activeClass = index === 0 ? 'active' : '';
+                html += `<button class="item-btn ${activeClass}" onclick="loadFile('${file.name}', '${file.id}', this)">
+                            <span>${file.name}</span> 🎵
+                         </button>`;
+            });
+            sidebar.innerHTML = html;
+
+            loadFile(files[0].name, files[0].id, sidebar.querySelector('.item-btn'));
+        }
+
+        function loadFile(fileName, fileId, btnElement) {
+            document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
+            if (btnElement) btnElement.classList.add('active');
+
+            document.getElementById('fileTitle').innerText = fileName;
+            document.getElementById('pdfViewer').src = `https://drive.google.com/file/d/${fileId}/preview`;
+            document.getElementById('downloadLink').href = `https://drive.google.com/uc?export=download&id=${fileId}`;
+        }
+
+        window.onload = function() {
+            renderSidebar();
+        };
+    </script>
+
+</body>
+</html>
