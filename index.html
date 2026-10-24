@@ -286,7 +286,6 @@
             border: none;
         }
 
-        /* Password Modal Styling */
         #authModal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -335,7 +334,6 @@
 <body>
 
 <div class="container">
-    <!-- DASHBOARD HOME VIEW -->
     <div id="dashboardView" style="display: flex;">
         <h2>اختر القسم المطلوب</h2>
         <div class="menu-grid">
@@ -351,7 +349,6 @@
         </div>
     </div>
 
-    <!-- ATTENDANCE APP VIEW -->
     <div id="attendanceView" class="sub-view">
         <div class="header">
             <div class="nav-left">
@@ -369,7 +366,6 @@
         </div>
     </div>
 
-    <!-- ALHAN DRIVE FOLDER VIEW -->
     <div id="alhanView" class="sub-view">
         <div class="header">
             <button class="back-btn" onclick="goHome()">🏠 الرئيسية</button>
@@ -380,7 +376,6 @@
         </div>
     </div>
 
-    <!-- COPTIC DRIVE FOLDER VIEW -->
     <div id="copticView" class="sub-view">
         <div class="header" style="flex-direction: column; align-items: flex-start; gap: 10px;">
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
@@ -398,7 +393,6 @@
     </div>
 </div>
 
-<!-- Password Modal -->
 <div id="authModal">
     <div class="auth-box">
         <h3>أدخل رمز المرور لسجل الحضور</h3>
@@ -409,7 +403,7 @@
 </div>
 
 <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxBBv93T36ThXKBNbouhCIlOa4-L1MMz_W_Z16gRct1vR2i67atKeUjg3Qfnvh8QFRW/exec'; // Replace with your actual Web App URL
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxBBv93T36ThXKBNbouhCIlOa4-L1MMz_W_Z16gRct1vR2i67atKeUjg3Qfnvh8QFRW/exec';
 
     let allData = {};
     let currentTab = 'غما 1';
