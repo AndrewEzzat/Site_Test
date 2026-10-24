@@ -409,7 +409,7 @@
 </div>
 
 <script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyqPDPbgU1gn_TITXAzmhvLSkF4xDTpGNV1YzUOZFPMRYLP9l6ss_iLgtk0EVlkYYDE/exec'; // Replace with your actual Web App URL
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxBBv93T36ThXKBNbouhCIlOa4-L1MMz_W_Z16gRct1vR2i67atKeUjg3Qfnvh8QFRW/exec'; // Replace with your actual Web App URL
 
     let allData = {};
     let currentTab = 'غما 1';
@@ -513,4 +513,53 @@
         });
 
         html += '</tbody></table>';
-        document.getElementById('content
+        document.getElementById('contentArea').innerHTML = html;
+    }
+
+    async function toggleStatus(tabName, rowIndex, colIndex, currentStatus, btnElement) {
+        const newStatus = (currentStatus === 'حاضر') ? 'غائب' : 'حاضر';
+
+        btnElement.innerText = newStatus;
+        btnElement.className = 'status-btn ' + (newStatus === 'حاضر' ? 'status-present' : 'status-absent');
+        btnElement.disabled = true;
+
+        try {
+            await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    token: activeToken,
+                    tabName: tabName,
+                    rowIndex: rowIndex,
+                    colIndex: colIndex,
+                    status: newStatus
+                })
+            });
+            
+            const student = allData[tabName].students.find(s => s.rowIndex === rowIndex);
+            if (student) student.attendance[colIndex - 3] = newStatus;
+
+            btnElement.setAttribute('onclick', 'toggleStatus(\'' + currentTab + '\', ' + rowIndex + ', ' + colIndex + ', \'' + newStatus + '\', this)');
+        } catch (err) {
+            alert('تعذر حفظ التغيير في Google Sheet.');
+            btnElement.innerText = currentStatus;
+            btnElement.className = 'status-btn ' + (currentStatus === 'حاضر' ? 'status-present' : 'status-absent');
+        } finally {
+            btnElement.disabled = false;
+        }
+    }
+
+    function filterTable() {
+        const query = document.getElementById('searchBox').value.toLowerCase();
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach(row => {
+            const nameCell = row.cells[0];
+            if (nameCell) {
+                const match = nameCell.innerText.toLowerCase().includes(query);
+                row.style.display = match ? '' : 'none';
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
