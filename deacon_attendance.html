@@ -3,17 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سجل الحضور - مدرسة الشمامسة</title>
+    <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2563eb;
+            --primary-hover: #1d4ed8;
             --primary-light: #eff6ff;
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --absent-bg: #fee2e2;
+            --absent-text: #991b1b;
         }
 
         * {
@@ -35,90 +40,101 @@
         .header {
             background: #ffffff;
             border-bottom: 1px solid var(--border);
-            padding: 12px 20px;
+            padding: 16px 28px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
         }
 
         .back-btn {
-            background: #e2e8f0;
+            background: #f1f5f9;
             color: var(--text-main);
-            border: none;
-            padding: 8px 14px;
+            border: 1px solid var(--border);
+            padding: 8px 16px;
             font-weight: 700;
             font-size: 13px;
             border-radius: 8px;
             cursor: pointer;
             text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #e2e8f0;
+            border-color: #cbd5e1;
         }
 
         .container {
-            max-width: 1100px;
-            margin: 30px auto;
-            padding: 0 20px;
+            max-width: 1200px;
+            margin: 36px auto;
+            padding: 0 24px;
             width: 100%;
             flex: 1;
         }
 
         .page-title {
-            font-size: 22px;
+            font-size: 26px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             color: var(--text-main);
             text-align: center;
         }
 
-        /* Tab Switcher Buttons */
+        /* Tab Switcher Navigation */
         .tabs-nav {
             display: flex;
             justify-content: center;
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
         }
 
         .tab-btn {
             background: #ffffff;
             border: 1px solid var(--border);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             color: var(--text-muted);
-            transition: all 0.2s;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease;
         }
 
         .tab-btn:hover {
             border-color: var(--primary);
             color: var(--primary);
+            transform: translateY(-1px);
         }
 
         .tab-btn.active {
             background: var(--primary);
             color: #ffffff;
             border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         /* Table Card Container */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
             overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            text-align: center;
+            text-align: right;
+            white-space: nowrap;
         }
 
         th, td {
-            padding: 12px 16px;
+            padding: 14px 18px;
             border-bottom: 1px solid var(--border);
             font-size: 14px;
         }
@@ -127,21 +143,63 @@
             background: var(--primary-light);
             color: var(--primary);
             font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        tr:hover {
+        th:first-child, td:first-child {
+            text-align: right;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
             background: #f8fafc;
+        }
+
+        /* Optional Badge Styling for Attendance marks if text contains P/A or similar */
+        .status-present {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-absent {
+            background-color: var(--absent-bg);
+            color: var(--absent-text);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            display: inline-block;
         }
 
         .loading-msg, .error-msg {
             text-align: center;
-            padding: 40px;
+            padding: 50px;
             color: var(--text-muted);
-            font-size: 15px;
+            font-size: 16px;
+            font-weight: 600;
         }
 
         .error-msg {
             color: #dc2626;
+        }
+
+        /* Scrollbar styling */
+        .table-card::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-card::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -150,13 +208,13 @@
     <!-- Header -->
     <div class="header">
         <a href="deacons.html" class="back-btn">⬅ عودة لقسم الشمامسة</a>
-        <h2 style="font-size: 16px; color: var(--primary);">سجل الحضور والغياب</h2>
+        <h2 style="font-size: 18px; color: var(--primary);">مدرسة الشمامسة</h2>
         <div></div>
     </div>
 
     <!-- Main Container -->
     <div class="container">
-        <h1 class="page-title">متابعة حضور فصول الشمامسة</h1>
+        <h1 class="page-title">سجل الحضور والغياب</h1>
 
         <!-- Dynamically Loaded Tabs -->
         <div class="tabs-nav" id="tabsNav">
@@ -190,7 +248,6 @@
                     });
                     tabsNav.innerHTML = html;
 
-                    // Load data for the first tab automatically
                     if (currentTab) {
                         loadAttendanceData(currentTab);
                     }
@@ -218,10 +275,13 @@
                     rows.forEach((row, rowIndex) => {
                         html += '<tr>';
                         row.forEach(cell => {
+                            let cellContent = cell !== "" ? cell : '-';
+                            
+                            // Optional smart styling for checkmarks or attendance signs if you use them
                             if (rowIndex === 0) {
-                                html += `<th>${cell !== "" ? cell : '-'}</th>`;
+                                html += `<th>${cellContent}</th>`;
                             } else {
-                                html += `<td>${cell !== "" ? cell : '-'}</td>`;
+                                html += `<td>${cellContent}</td>`;
                             }
                         });
                         html += '</tr>';
@@ -245,7 +305,6 @@
             loadAttendanceData(tabName);
         }
 
-        // Load tabs automatically on page load
         window.onload = function() {
             fetchTabs();
         };
