@@ -3,557 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم الرئيسية</title>
+    <title>الرئيسية - لوحة التحكم التعليمية</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2563eb;
+            --primary-dark: #1d4ed8;
             --primary-light: #eff6ff;
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
-            --present-bg: #dcfce7;
-            --present-text: #15803d;
-            --absent-bg: #fee2e2;
-            --absent-text: #b91c1c;
-            --sticky-bg: #f8fafc;
+            --bg-color: #f8fafc;
         }
 
         * {
             box-sizing: border-box;
             font-family: 'Cairo', sans-serif;
-        }
-
-        html, body {
-            height: 100vh;
             margin: 0;
             padding: 0;
-            background: #f8fafc;
-            color: var(--text-main);
-            direction: rtl;
-            overflow: hidden;
         }
 
-        .container {
-            width: 100%;
-            height: 100vh;
-            background: var(--card-bg);
-            padding: 12px;
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
         }
 
-        @media (min-width: 768px) {
-            .container {
-                max-width: 1200px;
-                height: 95vh;
-                margin: 2.5vh auto;
-                border-radius: 12px;
-                border: 1px solid var(--border);
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-                padding: 20px;
-            }
-        }
-
-        #dashboardView {
-            text-align: center;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        #dashboardView h2 {
-            margin-bottom: 24px;
-            font-size: 22px;
-            color: var(--text-main);
-        }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            width: 100%;
-            max-width: 700px;
-        }
-
-        .menu-card {
+        /* Top Navbar */
+        nav {
             background: #ffffff;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 24px 16px;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .logo-area h1 {
             font-size: 18px;
-            font-weight: 700;
             color: var(--primary);
-            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .nav-links {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            gap: 16px;
         }
 
-        .menu-card:active {
-            border-color: var(--primary);
-            background: var(--primary-light);
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 14px;
+            transition: color 0.2s;
         }
 
-        .sub-view {
-            display: none;
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
             flex: 1;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .header {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        @media (min-width: 768px) {
-            .header {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-        }
-
-        .nav-left {
-            display: flex;
-            gap: 8px;
-            align-items: center;
             width: 100%;
         }
 
-        .back-btn {
-            background: #e2e8f0;
-            color: var(--text-main);
-            border: none;
-            padding: 8px 14px;
-            font-weight: 700;
-            font-size: 13px;
-            border-radius: 8px;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 6px;
-            background: #f1f5f9;
-            padding: 4px;
-            border-radius: 8px;
-            flex: 1;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 12px;
-            font-weight: 700;
-            font-size: 13px;
-            cursor: pointer;
-            border-radius: 6px;
-            color: var(--text-muted);
-            flex: 1;
+        .hero {
             text-align: center;
-            white-space: nowrap;
+            margin-bottom: 40px;
         }
 
-        .tab-btn.active {
+        .hero h2 {
+            font-size: 28px;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Cards Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .category-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            text-decoration: none;
+        }
+
+        .category-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.1);
+        }
+
+        .card-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .category-card h3 {
+            font-size: 20px;
+            color: var(--text-main);
+        }
+
+        .category-card p {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .card-btn {
+            margin-top: 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+
+        .category-card:hover .card-btn {
             background: var(--primary);
             color: #ffffff;
         }
 
-        .search-box {
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 13px;
-            width: 100%;
-            outline: none;
-        }
-
-        @media (min-width: 768px) {
-            .search-box {
-                max-width: 280px;
-            }
-        }
-
-        .table-container {
-            flex: 1;
-            width: 100%;
-            overflow-x: auto;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 13px;
-            text-align: right;
-        }
-
-        th, td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            border-left: 1px solid var(--border);
-            white-space: nowrap;
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
             background: #ffffff;
-        }
-
-        th {
-            background-color: var(--sticky-bg);
-            color: var(--text-muted);
-            font-weight: 700;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        th:first-child, td:first-child {
-            position: sticky;
-            right: 0;
-            z-index: 11;
-            background-color: #ffffff;
-            box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
-            min-width: 130px;
-            max-width: 180px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        th:first-child {
-            z-index: 12;
-            background-color: var(--sticky-bg);
-        }
-
-        .status-btn {
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-weight: 700;
-            font-size: 12px;
-            border: none;
-            cursor: pointer;
-            min-width: 60px;
-        }
-
-        .status-present {
-            background-color: var(--present-bg);
-            color: var(--present-text);
-        }
-
-        .status-absent {
-            background-color: var(--absent-bg);
-            color: var(--absent-text);
-        }
-
-        .static-cell {
-            color: var(--text-muted);
-            font-size: 12px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        .drive-frame-container {
-            flex: 1;
-            width: 100%;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-            background: #fff;
-        }
-
-        .drive-frame-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        #authModal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-        .auth-box {
-            background: #fff;
-            padding: 24px;
-            border-radius: 12px;
-            text-align: center;
-            width: 90%;
-            max-width: 320px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        .auth-box input {
-            width: 100%;
-            padding: 10px;
-            margin: 12px 0;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            text-align: center;
-            font-size: 16px;
-            outline: none;
-        }
-        .auth-box button {
-            width: 100%;
-            padding: 10px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .auth-box .close-btn {
-            background: #cbd5e1;
-            color: var(--text-main);
-            margin-top: 8px;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="dashboardView" style="display: flex;">
-        <h2>اختر القسم المطلوب</h2>
-        <div class="menu-grid">
-            <div class="menu-card" onclick="openAttendanceSection()">
-                📋 <span>سجل الحضور والغياب</span>
-            </div>
-            <div class="menu-card" onclick="openView('alhanView')">
-                🎵 <span>مناهج الألحان</span>
-            </div>
-            <div class="menu-card" onclick="openView('copticView')">
-                📖 <span>مناهج القبطي</span>
-            </div>
+    <!-- Top Navigation Bar -->
+    <nav>
+        <div class="logo-area">
+            <h1>📚 لوحة الخدمات التعليمية</h1>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="active">الرئيسية</a>
+            <a href="#about" onclick="alert('قريباً: صفحة من نحن')">عن الخدمة</a>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <div class="container">
+        <div class="hero">
+            <h2>أهلاً بك، اختر القسم للبدء</h2>
+            <p>منصة إدارة المناهج وسجل الحضور والأنشطة الخادمية</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Sunday School Category -->
+            <a href="sundayschool.html" class="category-card">
+                <div class="card-icon">📖</div>
+                <h3>مدارس الأحد</h3>
+                <p>استعراض المناهج والدروس التعليمية المقسمة في مجلدات Google Drive.</p>
+                <span class="card-btn">استعراض القسم</span>
+            </a>
+
+            <!-- Deacons School Category -->
+            <a href="deacons.html" class="category-card">
+                <div class="card-icon">⛪</div>
+                <h3>مدرسة الشمامسة</h3>
+                <p>إدارة سجلات الحضور والغياب، ومناهج الألحان والمحتوى القبطي.</p>
+                <span class="card-btn">استعراض القسم</span>
+            </a>
         </div>
     </div>
 
-    <div id="attendanceView" class="sub-view">
-        <div class="header">
-            <div class="nav-left">
-                <button class="back-btn" onclick="goHome()">🏠 الرئيسية</button>
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchTab('غما 1', this)">غما 1</button>
-                    <button class="tab-btn" onclick="switchTab('غما 2', this)">غما 2</button>
-                    <button class="tab-btn" onclick="switchTab('غما 3', this)">غما 3</button>
-                </div>
-            </div>
-            <input type="text" id="searchBox" class="search-box" placeholder="بحث عن اسم الطالب..." onkeyup="filterTable()">
-        </div>
-        <div class="table-container">
-            <div id="contentArea" class="loading">جاري تحميل البيانات...</div>
-        </div>
-    </div>
-
-    <div id="alhanView" class="sub-view">
-        <div class="header">
-            <button class="back-btn" onclick="goHome()">🏠 الرئيسية</button>
-            <h3 style="margin: 0; color: var(--primary); font-size: 16px;">مناهج الألحان</h3>
-        </div>
-        <div class="drive-frame-container">
-            <iframe src="https://drive.google.com/embeddedfolderview?id=1vJY6ni57Unq1rxJCvQDbG6LEkA_ZeBuL#grid"></iframe>
-        </div>
-    </div>
-
-    <div id="copticView" class="sub-view">
-        <div class="header" style="flex-direction: column; align-items: flex-start; gap: 10px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-                <button class="back-btn" onclick="goHome()">🏠 الرئيسية</button>
-                <h3 style="margin: 0; color: var(--primary); font-size: 16px;">مناهج القبطي</h3>
-            </div>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchCopticFolder('1F1kQlTXx1ZLXU_JdII7kf59Oe4iOYqnp', this)">📁 ابتدائي</button>
-                <button class="tab-btn" onclick="switchCopticFolder('1MK3ZNhjUKFOwE4kXZpiU_wfjBF0TQcEg', this)">📁 اعدادي</button>
-            </div>
-        </div>
-        <div class="drive-frame-container">
-            <iframe id="copticFrame" src="https://drive.google.com/embeddedfolderview?id=1F1kQlTXx1ZLXU_JdII7kf59Oe4iOYqnp#grid"></iframe>
-        </div>
-    </div>
-</div>
-
-<div id="authModal">
-    <div class="auth-box">
-        <h3>أدخل رمز المرور لسجل الحضور</h3>
-        <input type="password" id="passcodeInput" placeholder="رمز المرور">
-        <button onclick="submitPasscode()">دخول</button>
-        <button class="close-btn" onclick="closeAuthModal()">إلغاء</button>
-    </div>
-</div>
-
-<script>
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxBBv93T36ThXKBNbouhCIlOa4-L1MMz_W_Z16gRct1vR2i67atKeUjg3Qfnvh8QFRW/exec';
-
-    let allData = {};
-    let currentTab = 'غما 1';
-    let activeToken = ''; 
-
-    function openAttendanceSection() {
-        document.getElementById('authModal').style.display = 'flex';
-        document.getElementById('passcodeInput').focus();
-    }
-
-    function closeAuthModal() {
-        document.getElementById('authModal').style.display = 'none';
-        document.getElementById('passcodeInput').value = '';
-    }
-
-    async function submitPasscode() {
-        const input = document.getElementById('passcodeInput').value.trim();
-        if (!input) return;
-        
-        activeToken = input; 
-        document.getElementById('authModal').style.display = 'none';
-        document.getElementById('passcodeInput').value = '';
-
-        openView('attendanceView');
-    }
-
-    function openView(viewId) {
-        document.getElementById('dashboardView').style.display = 'none';
-        document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
-        document.getElementById(viewId).style.display = 'flex';
-
-        if (viewId === 'attendanceView') {
-            loadData();
-        }
-    }
-
-    function goHome() {
-        activeToken = ''; 
-        document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
-        document.getElementById('dashboardView').style.display = 'flex';
-    }
-
-    function switchTab(tabName, btn) {
-        document.querySelectorAll('#attendanceView .tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTab = tabName;
-        renderTable();
-    }
-
-    function switchCopticFolder(folderId, btn) {
-        document.querySelectorAll('#copticView .tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('copticFrame').src = 'https://drive.google.com/embeddedfolderview?id=' + folderId + '#grid';
-    }
-
-    async function loadData() {
-        document.getElementById('contentArea').innerHTML = '<div class="loading">جاري تحميل البيانات...</div>';
-        try {
-            const res = await fetch(WEB_APP_URL + '?action=getData&token=' + encodeURIComponent(activeToken));
-            if (!res.ok) throw new Error('Network error');
-            allData = await res.json();
-
-            if (allData.error) {
-                document.getElementById('contentArea').innerHTML = '<div class="loading" style="color:red;">رمز المرور غير صحيح أو غير مصرح بالوصول.</div>';
-                return;
-            }
-
-            renderTable();
-        } catch (err) {
-            document.getElementById('contentArea').innerHTML = '<div class="loading" style="color:red;">حدث خطأ أثناء تحميل بيانات الحضور.</div>';
-        }
-    }
-
-    function renderTable() {
-        const tabData = allData[currentTab];
-        if (!tabData || !tabData.students || !tabData.students.length) {
-            document.getElementById('contentArea').innerHTML = '<div class="loading">لا توجد بيانات متاحة لهذا القسم.</div>';
-            return;
-        }
-
-        let html = '<table><thead><tr><th>اسم الطالب</th>';
-        tabData.dates.forEach(date => {
-            html += '<th>' + (date || '') + '</th>';
-        });
-        html += '</tr></thead><tbody id="tableBody">';
-
-        tabData.students.forEach(student => {
-            html += '<tr><td><strong>' + student.name + '</strong></td>';
-            student.attendance.forEach((status, colIdx) => {
-                const sheetColIndex = colIdx + 3;
-                const trimmedStatus = (status || '').toString().trim();
-
-                if (trimmedStatus === 'حاضر' || trimmedStatus === 'غائب') {
-                    const btnClass = (trimmedStatus === 'حاضر') ? 'status-present' : 'status-absent';
-                    html += '<td><button class="status-btn ' + btnClass + '" onclick="toggleStatus(\'' + currentTab + '\', ' + student.rowIndex + ', ' + sheetColIndex + ', \'' + trimmedStatus + '\', this)">' + trimmedStatus + '</button></td>';
-                } else {
-                    html += '<td><span class="static-cell">' + (trimmedStatus || '-') + '</span></td>';
-                }
-            });
-            html += '</tr>';
-        });
-
-        html += '</tbody></table>';
-        document.getElementById('contentArea').innerHTML = html;
-    }
-
-    async function toggleStatus(tabName, rowIndex, colIndex, currentStatus, btnElement) {
-        const newStatus = (currentStatus === 'حاضر') ? 'غائب' : 'حاضر';
-
-        btnElement.innerText = newStatus;
-        btnElement.className = 'status-btn ' + (newStatus === 'حاضر' ? 'status-present' : 'status-absent');
-        btnElement.disabled = true;
-
-        try {
-            await fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    token: activeToken,
-                    tabName: tabName,
-                    rowIndex: rowIndex,
-                    colIndex: colIndex,
-                    status: newStatus
-                })
-            });
-            
-            const student = allData[tabName].students.find(s => s.rowIndex === rowIndex);
-            if (student) student.attendance[colIndex - 3] = newStatus;
-
-            btnElement.setAttribute('onclick', 'toggleStatus(\'' + currentTab + '\', ' + rowIndex + ', ' + colIndex + ', \'' + newStatus + '\', this)');
-        } catch (err) {
-            alert('تعذر حفظ التغيير في Google Sheet.');
-            btnElement.innerText = currentStatus;
-            btnElement.className = 'status-btn ' + (currentStatus === 'حاضر' ? 'status-present' : 'status-absent');
-        } finally {
-            btnElement.disabled = false;
-        }
-    }
-
-    function filterTable() {
-        const query = document.getElementById('searchBox').value.toLowerCase();
-        const rows = document.querySelectorAll('#tableBody tr');
-        rows.forEach(row => {
-            const nameCell = row.cells[0];
-            if (nameCell) {
-                const match = nameCell.innerText.toLowerCase().includes(query);
-                row.style.display = match ? '' : 'none';
-            }
-        });
-    }
-</script>
+    <!-- Footer -->
+    <footer>
+        جميع الحقوق محفوظة &copy; 2026
+    </footer>
 
 </body>
 </html>
