@@ -75,6 +75,7 @@
             justify-content: center;
             gap: 12px;
             margin-bottom: 24px;
+            flex-wrap: wrap;
         }
 
         .tab-btn {
@@ -157,23 +158,50 @@
     <div class="container">
         <h1 class="page-title">متابعة حضور فصول الشمامسة</h1>
 
-        <!-- Tab Selection Buttons matching your sheet tabs -->
+        <!-- Dynamically Loaded Tabs -->
         <div class="tabs-nav" id="tabsNav">
-            <button class="tab-btn active" onclick="switchTab('غما 1', this)">غما 1</button>
-            <button class="tab-btn" onclick="switchTab('غما 2', this)">غما 2</button>
-            <button class="tab-btn" onclick="switchTab('غما 3', this)">غما 3</button>
+            <p class="loading-msg" style="padding: 0;">جاري تحميل الأقسام...</p>
         </div>
 
         <!-- Attendance Data Table Area -->
         <div class="table-card" id="tableContainer">
-            <p class="loading-msg">جاري تحميل بيانات الحضور...</p>
+            <p class="loading-msg">اختر قسماً لعرض البيانات...</p>
         </div>
     </div>
 
     <!-- Load Deacons Config -->
     <script src="deacons-config.js"></script>
     <script>
-        let currentTab = 'غما 1';
+        let currentTab = '';
+
+        async function fetchTabs() {
+            const tabsNav = document.getElementById('tabsNav');
+            try {
+                const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getAttendanceTabs`);
+                const result = await response.json();
+
+                if (result.status === "success" && result.tabs && result.tabs.length > 0) {
+                    let html = '';
+                    result.tabs.forEach((tabName, index) => {
+                        const activeClass = index === 0 ? 'active' : '';
+                        if (index === 0) currentTab = tabName;
+                        
+                        html += `<button class="tab-btn ${activeClass}" onclick="switchTab('${tabName.replace(/'/g, "\\'")}', this)">${tabName}</button>`;
+                    });
+                    tabsNav.innerHTML = html;
+
+                    // Load data for the first tab automatically
+                    if (currentTab) {
+                        loadAttendanceData(currentTab);
+                    }
+                } else {
+                    tabsNav.innerHTML = `<p class="error-msg">لم يتم العثور على أوراق عمل في الملف.</p>`;
+                }
+            } catch (err) {
+                console.error("Error fetching tabs:", err);
+                tabsNav.innerHTML = `<p class="error-msg">فشل الاتصال بجلب الأقسام.</p>`;
+            }
+        }
 
         async function loadAttendanceData(tabName) {
             const container = document.getElementById('tableContainer');
@@ -202,11 +230,11 @@
                     html += '</table>';
                     container.innerHTML = html;
                 } else {
-                    container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة في هذا الجدول أو تعذر العثور على الورقة.</p>`;
+                    container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة في هذا الجدول.</p>`;
                 }
             } catch (err) {
                 console.error("Error loading attendance:", err);
-                container.innerHTML = `<p class="error-msg">حدث خطأ أثناء الاتصال بالخادم. تأكد من إعدادات الـ Web App.</p>`;
+                container.innerHTML = `<p class="error-msg">حدث خطأ أثناء الاتصال بالخادم.</p>`;
             }
         }
 
@@ -217,9 +245,9 @@
             loadAttendanceData(tabName);
         }
 
-        // Load default tab on page load
+        // Load tabs automatically on page load
         window.onload = function() {
-            loadAttendanceData(currentTab);
+            fetchTabs();
         };
     </script>
 
