@@ -54,41 +54,15 @@
             text-decoration: none;
         }
 
-        /* Subheader Tabs for Categories/Stages */
-        .stage-tabs {
-            background: #f1f5f9;
-            padding: 8px 20px;
-            display: flex;
-            gap: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .stage-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 16px;
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--text-muted);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .stage-btn.active {
-            background: var(--primary);
-            color: #ffffff;
-        }
-
         /* Main Container */
         .main-container {
             display: flex;
             flex: 1;
-            height: calc(100vh - 110px);
+            height: calc(100vh - 61px);
             overflow: hidden;
         }
 
-        /* Sidebar for Items */
+        /* Sidebar for Dynamic Files */
         .sidebar {
             width: 280px;
             background: #ffffff;
@@ -186,6 +160,13 @@
             height: 100%;
             border: none;
         }
+
+        .loading-text {
+            color: var(--text-muted);
+            font-size: 13px;
+            text-align: center;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -193,28 +174,23 @@
     <!-- Header -->
     <div class="header">
         <a href="deacons.html" class="back-btn">⬅ عودة لقسم الشمامسة</a>
-        <h2 style="font-size: 16px; color: var(--primary);">مكتبة ومناهج الألحان</h2>
+        <h2 style="font-size: 16px; color: var(--primary);">مناهج الألحان والطقوس (تحديث تلقائي)</h2>
         <div></div>
-    </div>
-
-    <!-- Category Tabs -->
-    <div class="stage-tabs">
-        <button class="stage-btn active" onclick="switchCategory('hymns_primary', this)">📁 ألحان ابتدائي</button>
-        <button class="stage-btn" onclick="switchCategory('hymns_prep', this)">📁 ألحان إعدادي</button>
     </div>
 
     <!-- Main View -->
     <div class="main-container">
         <!-- Sidebar Navigation -->
         <div class="sidebar" id="sidebarItems">
-            <!-- Dynamically populated buttons -->
+            <h3>ملفات الألحان</h3>
+            <p class="loading-text">جاري تحميل الملفات من جوجل درايف...</p>
         </div>
 
         <!-- Viewer & Download Area -->
         <div class="viewer-area">
             <div class="viewer-toolbar">
-                <h4 id="fileTitle">اختر ملفاً</h4>
-                <a id="downloadLink" href="#" class="download-btn" target="_blank">
+                <h4 id="fileTitle">اختر لحناً</h4>
+                <a id="downloadLink" href="#" class="download-btn" target="_blank" style="display: none;">
                     📥 تحميل الملف
                 </a>
             </div>
@@ -224,50 +200,33 @@
         </div>
     </div>
 
+    <!-- Load Shared Deacons Config -->
+    <script src="deacons-config.js"></script>
     <script>
-        // Modular Data Structure for Hymns (Easily add or edit items here)
-        const hymnsData = {
-            hymns_primary: [
-                // Example structure - replace IDs with your actual Hymns PDF file IDs from Drive
-                { name: 'لحن البصخة - ابتدائي', id: '1vJY6ni57Unq1rxJCvQDbG6LEkA_ZeBuL' } 
-            ],
-            hymns_prep: [
-                // Add preparatory hymns files here
-            ]
-        };
-
-        let currentCategory = 'hymns_primary';
-
-        function switchCategory(categoryKey, btnElement) {
-            document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
-            btnElement.classList.add('active');
-            currentCategory = categoryKey;
-            renderSidebar();
-        }
-
-        function renderSidebar() {
+        async function fetchHymnsFiles() {
             const sidebar = document.getElementById('sidebarItems');
-            const files = hymnsData[currentCategory];
+            try {
+                const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getHymnsFiles`);
+                const data = await response.json();
 
-            if (!files || files.length === 0) {
-                sidebar.innerHTML = '<h3>قائمة الألحان</h3><p style="color:var(--text-muted); font-size:13px; padding:10px;">لا توجد ملفات مضافة في هذا القسم بعد.</p>';
-                document.getElementById('fileTitle').innerText = 'لا توجد ملفات';
-                document.getElementById('pdfViewer').src = '';
-                document.getElementById('downloadLink').style.display = 'none';
-                return;
+                if (data.status === "success" && data.files.length > 0) {
+                    let html = '<h3>ملفات الألحان</h3>';
+                    data.files.forEach((file, index) => {
+                        const activeClass = index === 0 ? 'active' : '';
+                        html += `<button class="item-btn ${activeClass}" onclick="loadFile('${file.name.replace(/'/g, "\\'")}', '${file.id}', this)">
+                                    <span>${file.name}</span> 🎵
+                                 </button>`;
+                    });
+                    sidebar.innerHTML = html;
+
+                    loadFile(data.files[0].name, data.files[0].id, sidebar.querySelector('.item-btn'));
+                } else {
+                    sidebar.innerHTML = '<h3>ملفات الألحان</h3><p class="loading-text">لا توجد ملفات في هذا المجلد.</p>';
+                }
+            } catch (error) {
+                console.error("Error fetching files:", error);
+                sidebar.innerHTML = '<h3>ملفات الألحان</h3><p class="loading-text" style="color:red;">فشل جلب الملفات. تأكد من رابط الـ Web App.</p>';
             }
-
-            document.getElementById('downloadLink').style.display = 'inline-flex';
-            let html = '<h3>قائمة الألحان</h3>';
-            files.forEach((file, index) => {
-                const activeClass = index === 0 ? 'active' : '';
-                html += `<button class="item-btn ${activeClass}" onclick="loadFile('${file.name}', '${file.id}', this)">
-                            <span>${file.name}</span> 🎵
-                         </button>`;
-            });
-            sidebar.innerHTML = html;
-
-            loadFile(files[0].name, files[0].id, sidebar.querySelector('.item-btn'));
         }
 
         function loadFile(fileName, fileId, btnElement) {
@@ -276,11 +235,14 @@
 
             document.getElementById('fileTitle').innerText = fileName;
             document.getElementById('pdfViewer').src = `https://drive.google.com/file/d/${fileId}/preview`;
-            document.getElementById('downloadLink').href = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            
+            const downloadBtn = document.getElementById('downloadLink');
+            downloadBtn.href = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            downloadBtn.style.display = 'inline-flex';
         }
 
         window.onload = function() {
-            renderSidebar();
+            fetchHymnsFiles();
         };
     </script>
 
