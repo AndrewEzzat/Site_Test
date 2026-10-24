@@ -291,7 +291,7 @@
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.85);
-            display: none;
+            display: flex; /* Always shows on load */
             justify-content: center;
             align-items: center;
             z-index: 9999;
@@ -398,48 +398,44 @@
     </div>
 </div>
 
-<!-- Password Modal -->
-<div id="authModal">
+<!-- Password Modal (Shows every time attendance is clicked) -->
+<div id="authModal" style="display:none;">
     <div class="auth-box">
         <h3>أدخل رمز المرور لسجل الحضور</h3>
-        <input type="password" id="passcodeinput" placeholder="رمز المرور">
-        <button onclick="verifyPasscode()">دخول</button>
+        <input type="password" id="passcodeInput" placeholder="رمز المرور">
+        <button onclick="submitPasscode()">دخول</button>
         <button class="close-btn" onclick="closeAuthModal()">إلغاء</button>
     </div>
 </div>
 
 <script>
     const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz1p92jY82Gh8tR4uHrHQWV0TLpyMIZ83BqNDIQV6Ztj-r8B-RRH9fhL9p6PuQCuA7I/exec';
-    const SECRET_KEY = '4343';
 
     let allData = {};
     let currentTab = 'غما 1';
     let dataLoaded = false;
+    let activeToken = ''; // Holds the password temporarily in memory for this session only
 
     function openAttendanceSection() {
-        const isAuthed = localStorage.getItem('attendance_authed');
-        if (isAuthed === 'true') {
-            switchView('attendanceView');
-        } else {
-            document.getElementById('authModal').style.display = 'flex';
-        }
+        // Always pop up the modal, never check localStorage
+        document.getElementById('authModal').style.display = 'flex';
     }
 
-    function verifyPasscode() {
-        const input = document.getElementById('passcodeinput').value;
-        if (input === SECRET_KEY) {
-            localStorage.setItem('attendance_authed', 'true');
-            document.getElementById('authModal').style.display = 'none';
-            document.getElementById('passcodeinput').value = '';
-            switchView('attendanceView');
-        } else {
-            alert('رمز المرور غير صحيح');
-        }
+    async function submitPasscode() {
+        const input = document.getElementById('passcodeInput').value;
+        if (!input) return;
+        
+        activeToken = input; // Save typed password for API requests during this session
+        document.getElementById('authModal').style.display = 'none';
+        document.getElementById('passcodeInput').value = '';
+
+        // Try loading data with the typed password
+        switchView('attendanceView');
     }
 
     function closeAuthModal() {
         document.getElementById('authModal').style.display = 'none';
-        document.getElementById('passcodeinput').value = '';
+        document.getElementById('passcodeInput').value = '';
     }
 
     function switchView(viewId) {
@@ -447,12 +443,14 @@
         document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
         document.getElementById(viewId).style.display = 'flex';
 
-        if (viewId === 'attendanceView' && !dataLoaded) {
+        if (viewId === 'attendanceView') {
             loadData();
         }
     }
 
     function goHome() {
+        dataLoaded = false;
+        activeToken = ''; // Clear token on exit for maximum security
         document.querySelectorAll('.sub-view').forEach(v => v.style.display = 'none');
         document.getElementById('dashboardView').style.display = 'flex';
     }
@@ -471,13 +469,14 @@
     }
 
     async function loadData() {
+        document.getElementById('contentArea').innerHTML = '<div class="loading">جاري تحميل البيانات...</div>';
         try {
-            const res = await fetch(WEB_APP_URL + '?action=getData&token=' + SECRET_KEY);
+            const res = await fetch(WEB_APP_URL + '?action=getData&token=' + encodeURIComponent(activeToken));
             if (!res.ok) throw new Error('Network error');
             allData = await res.json();
 
             if (allData.error) {
-                document.getElementById('contentArea').innerHTML = '<div class="loading" style="color:red;">غير مصرح بالوصول إلى البيانات.</div>';
+                document.getElementById('contentArea').innerHTML = '<div class="loading" style="color:red;">رمز المرور غير صحيح أو غير مصرح بالوصول.</div>';
                 return;
             }
 
@@ -525,14 +524,14 @@
         const newStatus = (currentStatus === 'حاضر') ? 'غائب' : 'حاضر';
 
         btnElement.innerText = newStatus;
-        btnElement.className = 'status-btn ' + (newStatus === 'حاضر' ? 'status-present' : 'status-absent');
+        btnElement.className = 'status-btn ' + (newStatus === 'حاضရ' ? 'status-present' : 'status-absent');
         btnElement.disabled = true;
 
         try {
             await fetch(WEB_APP_URL, {
                 method: 'POST',
                 body: JSON.stringify({
-                    token: SECRET_KEY,
+                    token: activeToken,
                     tabName: tabName,
                     rowIndex: rowIndex,
                     colIndex: colIndex,
@@ -543,7 +542,7 @@
             const student = allData[tabName].students.find(s => s.rowIndex === rowIndex);
             if (student) student.attendance[colIndex - 3] = newStatus;
 
-            btnElement.setAttribute('onclick', 'toggleStatus(\'' + tabName + '\', ' + rowIndex + ', ' + colIndex + ', \'' + newStatus + '\', this)');
+            btnElement.setAttribute('onclick', 'toggleStatus(\'' + currentTab + '\', ' + rowIndex + ', ' + colIndex + ', \'' + newStatus + '\', this)');
         } catch (err) {
             alert('تعذر حفظ التغيير في Google Sheet.');
             btnElement.innerText = currentStatus;
@@ -554,7 +553,7 @@
     }
 
     function filterTable() {
-        const query = document.getElementById('searchBox').value.toLowerCase();
+        const query = document.getElementById('searchBox'].value.toLowerCase();
         const rows = document.querySelectorAll('#tableBody tr');
         rows.forEach(row => {
             const nameCell = row.cells[0];
