@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- Enabled full pinch-to-zoom for two-finger gestures on phones -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <!-- Allowed wide zoom-out range (minimum-scale=0.2) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.2, maximum-scale=5.0, user-scalable=yes">
     <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -14,8 +14,7 @@
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --border: #cbd5e1; /* Clear explicit border color */
-            --border-light: #e2e8f0;
+            --border: #cbd5e1;
         }
 
         * {
@@ -34,7 +33,6 @@
             touch-action: manipulation;
         }
 
-        /* Compact Header */
         .header {
             background: #ffffff;
             border-bottom: 1px solid var(--border);
@@ -67,8 +65,8 @@
 
         .container {
             max-width: 100%;
-            margin: 14px auto;
-            padding: 0 10px;
+            margin: 12px auto;
+            padding: 0 8px;
             width: 100%;
             flex: 1;
         }
@@ -114,12 +112,11 @@
             cursor: pointer;
         }
 
-        /* Dynamic Tabs Bar */
         .tabs-nav {
             display: flex;
             justify-content: center;
             gap: 6px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             flex-wrap: wrap;
         }
 
@@ -139,19 +136,18 @@
             background: var(--primary);
             color: #ffffff;
             border-color: var(--primary);
-            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
 
-        /* Mobile Attendance Table Container */
+        /* Attendance Table Container */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 0;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-            max-height: 75vh;
+            max-height: 80vh;
         }
 
         table {
@@ -163,9 +159,8 @@
             font-size: 12px;
         }
 
-        /* Explicit Column & Row Borders */
         th, td {
-            padding: 8px 10px;
+            padding: 6px 8px;
             border-bottom: 1px solid var(--border);
             border-left: 1px solid var(--border);
             white-space: nowrap;
@@ -175,7 +170,7 @@
             border-right: 1px solid var(--border);
         }
 
-        /* Sticky Table Header */
+        /* Sticky Header */
         th {
             background: var(--primary-light);
             color: var(--primary);
@@ -186,53 +181,58 @@
             border-bottom: 2px solid var(--border);
         }
 
-        /* Sticky First Column (Deacon Names) */
-        td:first-child, th:first-child {
-            position: sticky;
-            right: 0;
-            background: #ffffff;
-            z-index: 10;
-            font-weight: 700;
-            text-align: right;
-            box-shadow: -2px 0 4px rgba(0,0,0,0.03);
+        /* Strict width for ID column (م) */
+        .col-id {
+            width: 38px !important;
+            min-width: 38px !important;
+            max-width: 42px !important;
+            text-align: center !important;
         }
 
-        th:first-child {
+        /* Dynamic Sticky Columns */
+        .sticky-col {
+            position: sticky;
+            background: #ffffff;
+            z-index: 10;
+            box-shadow: -2px 0 4px rgba(0,0,0,0.04);
+        }
+
+        th.sticky-col {
             z-index: 30;
             background: var(--primary-light);
         }
 
-        tr:nth-child(even) td {
-            background-color: #f8fafc;
-        }
-        
-        tr:nth-child(even) td:first-child {
-            background-color: #f8fafc;
-        }
+        tr:nth-child(even) td { background-color: #f8fafc; }
+        tr:nth-child(even) td.sticky-col { background-color: #f8fafc; }
+        tr:hover td { background-color: #eff6ff !important; }
 
-        tr:hover td {
-            background-color: #eff6ff !important;
-        }
-
-        /* Professional Neutral Badge for Attendance Marks */
+        /* Status Badges with Click Feedback */
         .badge-present {
             background-color: #dcfce7;
             color: #166534;
-            padding: 2px 8px;
-            border-radius: 4px;
+            padding: 3px 10px;
+            border-radius: 6px;
             font-weight: 700;
             font-size: 11px;
             display: inline-block;
+            cursor: pointer;
+            user-select: none;
         }
 
         .badge-absent {
-            background-color: #f1f5f9; /* Neutral slate gray background instead of red */
-            color: #475569; /* Soft dark slate text */
-            padding: 2px 8px;
-            border-radius: 4px;
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 3px 10px;
+            border-radius: 6px;
             font-weight: 600;
             font-size: 11px;
             display: inline-block;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .editable-cell {
+            cursor: pointer;
         }
 
         .loading-msg, .error-msg {
@@ -254,7 +254,7 @@
     </div>
 
     <div class="container">
-        <!-- Password Form (Prompted fresh on every visit) -->
+        <!-- Password Form -->
         <div id="authSection" class="auth-card">
             <h3>🔒 يرجى إدخال كلمة المرور</h3>
             <input type="password" id="passwordInput" placeholder="كلمة المرور" autofocus>
@@ -271,8 +271,9 @@
 
     <script src="deacons-config.js"></script>
     <script>
-        // Kept purely in temporary memory during runtime
         let userPassword = '';
+        let currentTabName = '';
+        let sheetStartRowIndex = 1;
 
         async function authenticate() {
             const inputPass = document.getElementById('passwordInput').value.trim();
@@ -328,11 +329,8 @@
             }
         }
 
-        // Helper function to strip time from Google Sheets date values
         function formatCellValue(val) {
             if (val === null || val === undefined || val === "") return '-';
-            
-            // Check if string is an ISO Date string (e.g., 2026-10-25T22:00:00.000Z)
             if (typeof val === 'string' && val.includes('T') && val.includes('Z')) {
                 const d = new Date(val);
                 if (!isNaN(d.getTime())) {
@@ -343,6 +341,7 @@
         }
 
         async function loadAttendanceData(tabName) {
+            currentTabName = tabName;
             const container = document.getElementById('tableContainer');
             container.innerHTML = `<p class="loading-msg">جاري تحميل ${tabName}...</p>`;
 
@@ -352,25 +351,38 @@
 
                 if (result.status === "success" && result.data && result.data.length > 0) {
                     let rows = result.data;
+                    let frozenCols = result.frozenColumns || 2;
+                    sheetStartRowIndex = result.startRowIndex || 1;
+
                     let html = '<table>';
                     
                     rows.forEach((row, rowIndex) => {
                         html += '<tr>';
                         row.forEach((cell, colIndex) => {
                             let formatted = formatCellValue(cell);
-                            
+                            let isFrozen = colIndex < frozenCols;
+                            let stickyClass = isFrozen ? 'sticky-col' : '';
+                            let idClass = colIndex === 0 ? 'col-id' : '';
+
                             if (rowIndex === 0) {
-                                html += `<th>${formatted}</th>`;
+                                html += `<th class="${stickyClass} ${idClass}" data-col="${colIndex}">${formatted}</th>`;
                             } else {
-                                // Smart subtle styling for attendance status
                                 let displayCell = formatted;
-                                if (formatted === 'غائب' || formatted === 'غ') {
-                                    displayCell = `<span class="badge-absent">${formatted}</span>`;
-                                } else if (formatted === 'حاضر' || formatted === 'ح') {
-                                    displayCell = `<span class="badge-present">${formatted}</span>`;
-                                }
+                                let editable = !isFrozen ? 'editable-cell' : '';
                                 
-                                html += `<td>${displayCell}</td>`;
+                                if (formatted === 'غائب' || formatted === 'غ') {
+                                    displayCell = `<span class="badge-absent">غائب</span>`;
+                                } else if (formatted === 'حاضر' || formatted === 'ح') {
+                                    displayCell = `<span class="badge-present">حاضر</span>`;
+                                }
+
+                                const actualRowInSheet = sheetStartRowIndex + rowIndex;
+                                const actualColInSheet = colIndex + 1;
+
+                                html += `<td class="${stickyClass} ${idClass} ${editable}" 
+                                            data-row="${actualRowInSheet}" 
+                                            data-col="${actualColInSheet}"
+                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
                             }
                         });
                         html += '</tr>';
@@ -378,11 +390,71 @@
                     
                     html += '</table>';
                     container.innerHTML = html;
+
+                    // Compute dynamic right offsets for frozen sticky columns in RTL
+                    applyStickyOffsets(frozenCols);
+
                 } else {
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
                 }
             } catch (err) {
                 container.innerHTML = `<p class="error-msg">خطأ في الاتصال.</p>`;
+            }
+        }
+
+        function applyStickyOffsets(frozenCols) {
+            const table = document.querySelector('table');
+            if (!table) return;
+
+            for (let c = 0; c < frozenCols; c++) {
+                let offset = 0;
+                for (let prev = 0; prev < c; prev++) {
+                    const sampleCell = table.querySelector(`tr th[data-col="${prev}"]`);
+                    if (sampleCell) offset += sampleCell.offsetWidth;
+                }
+                const colCells = table.querySelectorAll(`tr td:nth-child(${c + 1}), tr th:nth-child(${c + 1})`);
+                colCells.forEach(cell => {
+                    cell.style.right = `${offset}px`;
+                });
+            }
+        }
+
+        async function toggleAttendance(cellElement, tabName) {
+            if (!cellElement.classList.contains('editable-cell')) return;
+
+            const rowIndex = cellElement.getAttribute('data-row');
+            const colIndex = cellElement.getAttribute('data-col');
+            const currentBadge = cellElement.querySelector('span');
+            
+            let newStatus = 'حاضر';
+            if (currentBadge && (currentBadge.innerText.trim() === 'حاضر' || currentBadge.innerText.trim() === 'ح')) {
+                newStatus = 'غائب';
+            }
+
+            // Optimistic UI update for instantaneous click response
+            if (newStatus === 'حاضر') {
+                cellElement.innerHTML = `<span class="badge-present">حاضر</span>`;
+            } else {
+                cellElement.innerHTML = `<span class="badge-absent">غائب</span>`;
+            }
+
+            try {
+                const payload = {
+                    password: userPassword,
+                    tabName: tabName,
+                    rowIndex: parseInt(rowIndex),
+                    colIndex: parseInt(colIndex),
+                    status: newStatus
+                };
+
+                await fetch(DEACON_CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Failed to update Google Sheets:", err);
             }
         }
 
