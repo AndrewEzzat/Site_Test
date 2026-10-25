@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,7 +17,7 @@
             --teal-dark: #46bdc6;
             --teal-mid: #6acad1;
             --teal-light: #8af0f8;
-            --frozen-bg: #f0fdffa2;
+            --frozen-bg: #f0fdff;
         }
 
         * {
@@ -33,7 +33,6 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            touch-action: manipulation;
         }
 
         .header {
@@ -140,37 +139,23 @@
             border-color: var(--primary);
         }
 
-        /* Split Table Wrapper Component */
+        /* Unified Single Table Container */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
-            display: flex;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            overflow: auto; /* Handles both vertical and horizontal scrolling naturally */
             max-height: 80vh;
-        }
-
-        .frozen-pane {
-            overflow-x: auto;
-            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
-            border-left: 2px solid var(--border);
-            background: var(--frozen-bg);
-            flex-shrink: 0;
-        }
-
-        .scrollable-pane {
-            overflow-x: auto;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            flex: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            position: relative;
         }
 
         table {
             border-collapse: separate;
             border-spacing: 0;
             width: max-content;
+            min-width: 100%;
             text-align: center;
             font-size: 12px;
         }
@@ -180,19 +165,21 @@
             border-bottom: 1px solid var(--border);
             border-left: 1px solid var(--border);
             white-space: nowrap;
-            height: 33px;
+            background-color: #ffffff;
         }
 
+        /* Sticky Header Row */
         th {
             background: var(--teal-dark);
             color: #ffffff;
             font-weight: 700;
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 30;
             border-bottom: 2px solid var(--border);
         }
 
+        /* Strict width for ID column */
         .col-id {
             width: 38px !important;
             min-width: 38px !important;
@@ -200,6 +187,33 @@
             text-align: center !important;
         }
 
+        /* Freeze Column 1 (م) */
+        td:nth-child(1), th:nth-child(1) {
+            position: sticky;
+            right: 0;
+            z-index: 20;
+            background-color: var(--frozen-bg);
+        }
+        th:nth-child(1) {
+            z-index: 40;
+            background: var(--teal-dark);
+        }
+
+        /* Freeze Column 2 (الاسم) - Offset matches column 1 width (38px) */
+        td:nth-child(2), th:nth-child(2) {
+            position: sticky;
+            right: 38px;
+            z-index: 20;
+            background-color: var(--frozen-bg);
+            text-align: right;
+            min-width: 130px;
+        }
+        th:nth-child(2) {
+            z-index: 40;
+            background: var(--teal-dark);
+        }
+
+        /* Total / Summary Highlights */
         .total-cell {
             background-color: var(--teal-light) !important;
             color: #0f172a !important;
@@ -211,12 +225,8 @@
             color: #ffffff !important;
         }
 
-        tr:nth-child(even) td:not(.total-cell) { 
+        tr:nth-child(even) td:not(:nth-child(1)):not(:nth-child(2)):not(.total-cell) { 
             background-color: #f8fafc; 
-        }
-
-        .frozen-pane tr:nth-child(even) td {
-            background-color: #e6ffff;
         }
 
         tr:hover td { 
@@ -354,7 +364,6 @@
             return val;
         }
 
-        // Helper to detect and propagate merged header cells from left-to-right (RTL)
         function processMergedHeaders(headersRow) {
             let processed = [...headersRow];
             let lastValidText = '';
@@ -363,7 +372,7 @@
                 if (val !== '-' && val !== '') {
                     lastValidText = val;
                 } else if (lastValidText !== '') {
-                    processed[i] = lastValidText; // Inherit text for merged cells
+                    processed[i] = lastValidText;
                 }
             }
             return processed;
@@ -380,24 +389,19 @@
 
                 if (result.status === "success" && result.data && result.data.length > 0) {
                     let rows = result.data;
-                    const frozenCols = 2; // Strictly freeze first 2 columns (ID & Name)
                     sheetStartRowIndex = result.startRowIndex || 1;
 
-                    // Handle merged headers on row 0
                     if (rows.length > 0) {
                         rows[0] = processMergedHeaders(rows[0]);
                     }
 
-                    let frozenHtml = '<div class="frozen-pane"><table>';
-                    let scrollHtml = '<div class="scrollable-pane"><table>';
+                    let html = '<table>';
                     
                     rows.forEach((row, rowIndex) => {
-                        frozenHtml += '<tr>';
-                        scrollHtml += '<tr>';
-
+                        html += '<tr>';
                         row.forEach((cell, colIndex) => {
                             let formatted = formatCellValue(cell);
-                            let isFrozen = colIndex < frozenCols;
+                            let isFrozen = colIndex < 2; // Freeze first 2 columns
                             let idClass = colIndex === 0 ? 'col-id' : '';
                             
                             const textVal = String(formatted).toLowerCase();
@@ -405,9 +409,7 @@
 
                             if (rowIndex === 0) {
                                 let headerClass = isTotal ? 'total-header' : '';
-                                const thMarkup = `<th class="${headerClass} ${idClass}">${formatted}</th>`;
-                                if (isFrozen) frozenHtml += thMarkup;
-                                else scrollHtml += thMarkup;
+                                html += `<th class="${headerClass} ${idClass}">${formatted}</th>`;
                             } else {
                                 let displayCell = formatted;
                                 let editable = !isFrozen && !isTotal ? 'editable-cell' : '';
@@ -423,26 +425,17 @@
                                 
                                 let cellStyleClass = isTotal ? 'total-cell' : editable;
 
-                                const tdMarkup = `<td class="${idClass} ${cellStyleClass}" 
+                                html += `<td class="${idClass} ${cellStyleClass}" 
                                             data-row="${actualRowInSheet}" 
                                             data-col-idx="${actualColInSheet}"
                                             onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}', ${isTotal || isFrozen})">${displayCell}</td>`;
-
-                                if (isFrozen) frozenHtml += tdMarkup;
-                                else scrollHtml += tdMarkup;
                             }
                         });
-
-                        frozenHtml += '</tr>';
-                        scrollHtml += '</tr>';
+                        html += '</tr>';
                     });
                     
-                    frozenHtml += '</table></div>';
-                    scrollHtml += '</table></div>';
-                    
-                    container.innerHTML = frozenHtml + scrollHtml;
-
-                    setupScrollSync();
+                    html += '</table>';
+                    container.innerHTML = html;
 
                 } else {
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
@@ -450,29 +443,6 @@
             } catch (err) {
                 container.innerHTML = `<p class="error-msg">خطأ في الاتصال.</p>`;
             }
-        }
-
-        function setupScrollSync() {
-            const frozenPane = document.querySelector('.frozen-pane');
-            const scrollablePane = document.querySelector('.scrollable-pane');
-            if (!frozenPane || !scrollablePane) return;
-
-            let isSyncing = false;
-            frozenPane.addEventListener('scroll', () => {
-                if (!isSyncing) {
-                    isSyncing = true;
-                    scrollablePane.scrollTop = frozenPane.scrollTop;
-                }
-                isSyncing = false;
-            });
-
-            scrollablePane.addEventListener('scroll', () => {
-                if (!isSyncing) {
-                    isSyncing = true;
-                    frozenPane.scrollTop = scrollablePane.scrollTop;
-                }
-                isSyncing = false;
-            });
         }
 
         async function toggleAttendance(cellElement, tabName, isLocked) {
