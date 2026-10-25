@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- Fully unlocked zoom range for maximum freedom -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.05, maximum-scale=10.0, user-scalable=yes">
+    <!-- Fully unlocked zoom range -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.1, maximum-scale=10.0, user-scalable=yes">
     <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -15,10 +15,11 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #cbd5e1;
-            /* Custom sheet highlight colors requested */
-            --accent-teal-dark: #46bdc6;
-            --accent-teal-mid: #6acad1;
-            --accent-teal-light: #8af0f8;
+            /* Requested Sheet Colors */
+            --teal-dark: #46bdc6;
+            --teal-mid: #6acad1;
+            --teal-light: #8af0f8;
+            --frozen-bg: #f0fdffa2; /* Soft light teal tint for frozen columns */
         }
 
         * {
@@ -172,18 +173,18 @@
             border-right: 1px solid var(--border);
         }
 
-        /* Sticky Header Row only (Allows horizontal swipe through all columns freely) */
+        /* Sticky Header Row */
         th {
-            background: var(--primary-light);
-            color: var(--primary);
+            background: var(--teal-dark);
+            color: #ffffff;
             font-weight: 700;
             position: sticky;
             top: 0;
-            z-index: 20;
+            z-index: 30;
             border-bottom: 2px solid var(--border);
         }
 
-        /* Strict small width for ID column (م) */
+        /* Strict width for ID column (م) */
         .col-id {
             width: 38px !important;
             min-width: 38px !important;
@@ -191,20 +192,40 @@
             text-align: center !important;
         }
 
-        /* Highlight classes for Total rows/columns or key headers using requested colors */
-        .highlight-header {
-            background-color: var(--accent-teal-dark) !important;
-            color: #ffffff !important;
+        /* Dynamic Sticky (Frozen) Columns Styling */
+        .sticky-col {
+            position: sticky;
+            background: var(--frozen-bg);
+            z-index: 20;
+            box-shadow: -2px 0 4px rgba(0,0,0,0.04);
+            font-weight: 600;
         }
 
-        .highlight-cell {
-            background-color: var(--accent-teal-light) !important;
+        th.sticky-col {
+            z-index: 40;
+            background: var(--teal-dark);
+            color: #ffffff;
+        }
+
+        /* Total / Summary Highlight Classes using requested colors */
+        .total-cell {
+            background-color: var(--teal-light) !important;
             color: #0f172a !important;
             font-weight: 700;
         }
 
-        tr:nth-child(even) td { background-color: #f8fafc; }
-        tr:hover td { background-color: #eff6ff !important; }
+        .total-header {
+            background-color: var(--teal-mid) !important;
+            color: #ffffff !important;
+        }
+
+        tr:nth-child(even) td:not(.sticky-col):not(.total-cell) { 
+            background-color: #f8fafc; 
+        }
+
+        tr:hover td { 
+            background-color: #e0f2fe !important; 
+        }
 
         .badge-present {
             background-color: #dcfce7;
@@ -348,6 +369,7 @@
 
                 if (result.status === "success" && result.data && result.data.length > 0) {
                     let rows = result.data;
+                    let frozenCols = result.frozenColumns || 2;
                     sheetStartRowIndex = result.startRowIndex || 1;
 
                     let html = '<table>';
@@ -356,21 +378,19 @@
                         html += '<tr>';
                         row.forEach((cell, colIndex) => {
                             let formatted = formatCellValue(cell);
+                            let isFrozen = colIndex < frozenCols;
+                            let stickyClass = isFrozen ? 'sticky-col' : '';
                             let idClass = colIndex === 0 ? 'col-id' : '';
                             
-                            // Detect if row or column relates to Totals / Summary
-                            let isTotal = false;
                             const textVal = String(formatted).toLowerCase();
-                            if (textVal.includes('إجمالي') || textVal.includes('مجموع') || textVal.includes('total')) {
-                                isTotal = true;
-                            }
+                            let isTotal = textVal.includes('إجمالي') || textVal.includes('مجموع') || textVal.includes('total') || textVal.includes('المجموع') || textVal.includes('الإجمالي');
 
                             if (rowIndex === 0) {
-                                let headerClass = isTotal ? 'highlight-header' : '';
-                                html += `<th class="${headerClass} ${idClass}">${formatted}</th>`;
+                                let headerClass = isTotal ? 'total-header' : '';
+                                html += `<th class="${stickyClass} ${headerClass} ${idClass}" data-col="${colIndex}">${formatted}</th>`;
                             } else {
                                 let displayCell = formatted;
-                                let editable = 'editable-cell';
+                                let editable = !isFrozen && !isTotal ? 'editable-cell' : '';
                                 
                                 if (formatted === 'غائب' || formatted === 'غ') {
                                     displayCell = `<span class="badge-absent">غائب</span>`;
@@ -381,13 +401,13 @@
                                 const actualRowInSheet = sheetStartRowIndex + rowIndex;
                                 const actualColInSheet = colIndex + 1;
                                 
-                                // Make total columns non-editable and nicely styled
-                                let cellStyleClass = isTotal ? 'highlight-cell' : editable;
+                                let cellStyleClass = isTotal ? 'total-cell' : editable;
 
-                                html += `<td class="${idClass} ${cellStyleClass}" 
+                                html += `<td class="${stickyClass} ${idClass} ${cellStyleClass}" 
+                                            data-col="${colIndex}"
                                             data-row="${actualRowInSheet}" 
-                                            data-col="${actualColInSheet}"
-                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}', ${isTotal})">${displayCell}</td>`;
+                                            data-col-idx="${actualColInSheet}"
+                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}', ${isTotal || isFrozen})">${displayCell}</td>`;
                             }
                         });
                         html += '</tr>';
@@ -395,6 +415,9 @@
                     
                     html += '</table>';
                     container.innerHTML = html;
+
+                    // Dynamically calculate RTL right offsets for the frozen columns
+                    applyStickyOffsets(frozenCols);
 
                 } else {
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
@@ -404,11 +427,28 @@
             }
         }
 
-        async function toggleAttendance(cellElement, tabName, isTotal) {
-            if (isTotal || !cellElement.classList.contains('editable-cell')) return;
+        function applyStickyOffsets(frozenCols) {
+            const table = document.querySelector('table');
+            if (!table) return;
+
+            const rows = table.querySelectorAll('tr');
+            rows.forEach(row => {
+                let currentRight = 0;
+                for (let c = 0; c < frozenCols; c++) {
+                    const cell = row.children[c];
+                    if (cell) {
+                        cell.style.right = `${currentRight}px`;
+                        currentRight += cell.offsetWidth;
+                    }
+                }
+            });
+        }
+
+        async function toggleAttendance(cellElement, tabName, isLocked) {
+            if (isLocked || !cellElement.classList.contains('editable-cell')) return;
 
             const rowIndex = cellElement.getAttribute('data-row');
-            const colIndex = cellElement.getAttribute('data-col');
+            const colIndex = cellElement.getAttribute('data-col-idx');
             const currentBadge = cellElement.querySelector('span');
             
             let newStatus = 'حاضر';
