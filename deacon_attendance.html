@@ -18,7 +18,6 @@
             --teal-mid: #6acad1;
             --teal-light: #8af0f8;
             --frozen-bg: #f0fdff;
-            /* Refined medium-thick border for months and totals */
             --medium-border: 2px solid #334155; 
         }
 
@@ -222,7 +221,7 @@
             color: #ffffff !important;
         }
 
-        /* Medium thick borders for month separation and total columns/rows */
+        /* Medium thick borders */
         .month-separator {
             border-left: var(--medium-border) !important;
         }
@@ -269,6 +268,17 @@
 
         .editable-cell {
             cursor: pointer;
+        }
+
+        .editable-text-input {
+            width: 100%;
+            border: 1px solid var(--primary);
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            outline: none;
+            background: #fff;
         }
 
         .loading-msg, .error-msg {
@@ -407,6 +417,10 @@
             return t.includes('إجمالي') || t.includes('مجموع') || t.includes('total') || t.includes('المجموع') || t.includes('الإجمالي');
         }
 
+        function isDateHeader(headerText) {
+            return /\d{4}-\d{2}-\d{2}/.test(String(headerText));
+        }
+
         async function loadAttendanceData(tabName) {
             currentTabName = tabName;
             const container = document.getElementById('tableContainer');
@@ -424,23 +438,29 @@
                         rows[0] = processMergedHeaders(rows[0]);
                     }
 
-                    // Identify month separators and total separators
                     let monthSeparators = new Array(rows[0].length).fill(false);
                     let totalCols = new Array(rows[0].length).fill(false);
                     let totalRows = new Array(rows.length).fill(false);
 
+                    let firstMonthFound = false;
+
                     if (rows.length > 0) {
                         let prevMonth = '';
-                        for (let c = 2; c < rows[0].length; c++) {
+                        for (let c = 0; c < rows[0].length; c++) {
                             let headerVal = String(rows[0][c]);
                             if (checkIfTotalRowOrCol(headerVal)) {
                                 totalCols[c] = true;
                             } else {
                                 let m = extractMonth(headerVal);
-                                if (m && prevMonth && m !== prevMonth) {
-                                    monthSeparators[c] = true;
+                                if (m) {
+                                    if (!firstMonthFound) {
+                                        monthSeparators[c] = true; // Border before the first month found
+                                        firstMonthFound = true;
+                                    } else if (prevMonth && m !== prevMonth) {
+                                        monthSeparators[c] = true; // Border between different months
+                                    }
+                                    prevMonth = m;
                                 }
-                                if (m) prevMonth = m;
                             }
                         }
                     }
@@ -468,7 +488,6 @@
                             let textVal = String(formatted).toLowerCase();
                             let isTotalCell = isColTotal || isRowTotal || checkIfTotalRowOrCol(textVal);
 
-                            // Apply medium thick separator class for month or total column
                             let extraClass = '';
                             if (monthSeparators[colIndex] && !isTotalCell) {
                                 extraClass += ' month-separator';
@@ -483,14 +502,28 @@
                             } else {
                                 let displayCell = formatted;
                                 let rawStr = String(formatted).trim();
+                                
+                                let headerColText = String(rows[0][colIndex] || '');
+                                let isDateCol = isDateHeader(headerColText);
+
                                 let isAttendanceCell = (rawStr === 'حاضر' || rawStr === 'غائب' || rawStr === 'ح' || rawStr === 'غ' || rawStr === '-');
                                 
-                                let editable = (!isFrozen && !isTotalCell && isAttendanceCell) ? 'editable-cell' : '';
+                                // Editable check: Attendance cells or any empty/text cells in non-date columns (like name, phone, notes)
+                                let editable = '';
+                                if (!isTotalCell) {
+                                    if (isDateCol && isAttendanceCell) {
+                                        editable = 'attendance-editable';
+                                    } else if (!isDateCol) {
+                                        editable = 'text-editable';
+                                    }
+                                }
                                 
-                                if (rawStr === 'غائب' || rawStr === 'غ') {
-                                    displayCell = `<span class="badge-absent">غائب</span>`;
-                                } else if (rawStr === 'حاضر' || rawStr === 'ح') {
-                                    displayCell = `<span class="badge-present">حاضر</span>`;
+                                if (isDateCol) {
+                                    if (rawStr === 'غائب' || rawStr === 'غ') {
+                                        displayCell = `<span class="badge-absent">غائب</span>`;
+                                    } else if (rawStr === 'حاضر' || rawStr === 'ح') {
+                                        displayCell = `<span class="badge-present">حاضر</span>`;
+                                    }
                                 }
 
                                 const actualRowInSheet = sheetStartRowIndex + rowIndex;
@@ -501,7 +534,8 @@
                                 html += `<td class="${idClass} ${cellStyleClass} ${editable} ${extraClass}" 
                                             data-row="${actualRowInSheet}" 
                                             data-col-idx="${actualColInSheet}"
-                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
+                                            data-is-date="${isDateCol}"
+                                            onclick="handleCellClick(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
                             }
                         });
                         html += '</tr>';
@@ -518,9 +552,17 @@
             }
         }
 
-        async function toggleAttendance(cellElement, tabName) {
-            if (!cellElement || !cellElement.classList.contains('editable-cell')) return;
+        function handleCellClick(cellElement, tabName) {
+            if (!cellElement) return;
 
+            if (cellElement.classList.contains('attendance-editable')) {
+                toggleAttendance(cellElement, tabName);
+            } else if (cellElement.classList.contains('text-editable') && !cellElement.querySelector('input')) {
+                makeCellEditable(cellElement, tabName);
+            }
+        }
+
+        async function toggleAttendance(cellElement, tabName) {
             const rowIndex = cellElement.getAttribute('data-row');
             const colIndex = cellElement.getAttribute('data-col-idx');
             const currentBadge = cellElement.querySelector('span');
@@ -536,13 +578,44 @@
                 cellElement.innerHTML = `<span class="badge-absent">غائب</span>`;
             }
 
+            sendUpdateToSheet(tabName, rowIndex, colIndex, newStatus);
+        }
+
+        function makeCellEditable(cellElement, tabName) {
+            const currentText = cellElement.innerText === '-' ? '' : cellElement.innerText;
+            cellElement.innerHTML = `<input type="text" class="editable-text-input" value="${currentText}" autofocus>`;
+            
+            const input = cellElement.querySelector('input');
+            input.focus();
+
+            input.onblur = function() {
+                saveTextInput(cellElement, tabName, input.value);
+            };
+
+            input.onkeydown = function(e) {
+                if (e.key === 'Enter') {
+                    input.blur();
+                }
+            };
+        }
+
+        async function saveTextInput(cellElement, tabName, val) {
+            const rowIndex = cellElement.getAttribute('data-row');
+            const colIndex = cellElement.getAttribute('data-col-idx');
+            const finalVal = val.trim() === '' ? '-' : val.trim();
+
+            cellElement.innerText = finalVal;
+            sendUpdateToSheet(tabName, rowIndex, colIndex, finalVal);
+        }
+
+        async function sendUpdateToSheet(tabName, rowIndex, colIndex, statusVal) {
             try {
                 const payload = {
                     password: userPassword,
                     tabName: tabName,
                     rowIndex: parseInt(rowIndex),
                     colIndex: parseInt(colIndex),
-                    status: newStatus
+                    status: statusVal
                 };
 
                 await fetch(DEACON_CONFIG.WEB_APP_URL, {
