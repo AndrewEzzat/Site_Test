@@ -2,8 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <!-- Allowed wide zoom-out range (minimum-scale=0.2) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.2, maximum-scale=5.0, user-scalable=yes">
+    <!-- Fully unlocked zoom range for maximum freedom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.05, maximum-scale=10.0, user-scalable=yes">
     <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -15,6 +15,10 @@
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #cbd5e1;
+            /* Custom sheet highlight colors requested */
+            --accent-teal-dark: #46bdc6;
+            --accent-teal-mid: #6acad1;
+            --accent-teal-light: #8af0f8;
         }
 
         * {
@@ -71,7 +75,6 @@
             flex: 1;
         }
 
-        /* Password Form */
         .auth-card {
             background: #ffffff;
             border: 1px solid var(--border);
@@ -138,7 +141,6 @@
             border-color: var(--primary);
         }
 
-        /* Attendance Table Container */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -170,7 +172,7 @@
             border-right: 1px solid var(--border);
         }
 
-        /* Sticky Header */
+        /* Sticky Header Row only (Allows horizontal swipe through all columns freely) */
         th {
             background: var(--primary-light);
             color: var(--primary);
@@ -181,32 +183,29 @@
             border-bottom: 2px solid var(--border);
         }
 
-        /* Strict width for ID column (م) */
+        /* Strict small width for ID column (م) */
         .col-id {
             width: 38px !important;
             min-width: 38px !important;
-            max-width: 42px !important;
+            max-width: 38px !important;
             text-align: center !important;
         }
 
-        /* Dynamic Sticky Columns */
-        .sticky-col {
-            position: sticky;
-            background: #ffffff;
-            z-index: 10;
-            box-shadow: -2px 0 4px rgba(0,0,0,0.04);
+        /* Highlight classes for Total rows/columns or key headers using requested colors */
+        .highlight-header {
+            background-color: var(--accent-teal-dark) !important;
+            color: #ffffff !important;
         }
 
-        th.sticky-col {
-            z-index: 30;
-            background: var(--primary-light);
+        .highlight-cell {
+            background-color: var(--accent-teal-light) !important;
+            color: #0f172a !important;
+            font-weight: 700;
         }
 
         tr:nth-child(even) td { background-color: #f8fafc; }
-        tr:nth-child(even) td.sticky-col { background-color: #f8fafc; }
         tr:hover td { background-color: #eff6ff !important; }
 
-        /* Status Badges with Click Feedback */
         .badge-present {
             background-color: #dcfce7;
             color: #166534;
@@ -254,7 +253,6 @@
     </div>
 
     <div class="container">
-        <!-- Password Form -->
         <div id="authSection" class="auth-card">
             <h3>🔒 يرجى إدخال كلمة المرور</h3>
             <input type="password" id="passwordInput" placeholder="كلمة المرور" autofocus>
@@ -262,7 +260,6 @@
             <p id="authError" class="error-msg" style="display:none; padding:8px 0 0 0;"></p>
         </div>
 
-        <!-- Attendance Dashboard Area -->
         <div id="attendanceSection" style="display: none;">
             <div class="tabs-nav" id="tabsNav"></div>
             <div class="table-card" id="tableContainer"></div>
@@ -351,7 +348,6 @@
 
                 if (result.status === "success" && result.data && result.data.length > 0) {
                     let rows = result.data;
-                    let frozenCols = result.frozenColumns || 2;
                     sheetStartRowIndex = result.startRowIndex || 1;
 
                     let html = '<table>';
@@ -360,15 +356,21 @@
                         html += '<tr>';
                         row.forEach((cell, colIndex) => {
                             let formatted = formatCellValue(cell);
-                            let isFrozen = colIndex < frozenCols;
-                            let stickyClass = isFrozen ? 'sticky-col' : '';
                             let idClass = colIndex === 0 ? 'col-id' : '';
+                            
+                            // Detect if row or column relates to Totals / Summary
+                            let isTotal = false;
+                            const textVal = String(formatted).toLowerCase();
+                            if (textVal.includes('إجمالي') || textVal.includes('مجموع') || textVal.includes('total')) {
+                                isTotal = true;
+                            }
 
                             if (rowIndex === 0) {
-                                html += `<th class="${stickyClass} ${idClass}" data-col="${colIndex}">${formatted}</th>`;
+                                let headerClass = isTotal ? 'highlight-header' : '';
+                                html += `<th class="${headerClass} ${idClass}">${formatted}</th>`;
                             } else {
                                 let displayCell = formatted;
-                                let editable = !isFrozen ? 'editable-cell' : '';
+                                let editable = 'editable-cell';
                                 
                                 if (formatted === 'غائب' || formatted === 'غ') {
                                     displayCell = `<span class="badge-absent">غائب</span>`;
@@ -378,11 +380,14 @@
 
                                 const actualRowInSheet = sheetStartRowIndex + rowIndex;
                                 const actualColInSheet = colIndex + 1;
+                                
+                                // Make total columns non-editable and nicely styled
+                                let cellStyleClass = isTotal ? 'highlight-cell' : editable;
 
-                                html += `<td class="${stickyClass} ${idClass} ${editable}" 
+                                html += `<td class="${idClass} ${cellStyleClass}" 
                                             data-row="${actualRowInSheet}" 
                                             data-col="${actualColInSheet}"
-                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
+                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}', ${isTotal})">${displayCell}</td>`;
                             }
                         });
                         html += '</tr>';
@@ -390,9 +395,6 @@
                     
                     html += '</table>';
                     container.innerHTML = html;
-
-                    // Compute dynamic right offsets for frozen sticky columns in RTL
-                    applyStickyOffsets(frozenCols);
 
                 } else {
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
@@ -402,25 +404,8 @@
             }
         }
 
-        function applyStickyOffsets(frozenCols) {
-            const table = document.querySelector('table');
-            if (!table) return;
-
-            for (let c = 0; c < frozenCols; c++) {
-                let offset = 0;
-                for (let prev = 0; prev < c; prev++) {
-                    const sampleCell = table.querySelector(`tr th[data-col="${prev}"]`);
-                    if (sampleCell) offset += sampleCell.offsetWidth;
-                }
-                const colCells = table.querySelectorAll(`tr td:nth-child(${c + 1}), tr th:nth-child(${c + 1})`);
-                colCells.forEach(cell => {
-                    cell.style.right = `${offset}px`;
-                });
-            }
-        }
-
-        async function toggleAttendance(cellElement, tabName) {
-            if (!cellElement.classList.contains('editable-cell')) return;
+        async function toggleAttendance(cellElement, tabName, isTotal) {
+            if (isTotal || !cellElement.classList.contains('editable-cell')) return;
 
             const rowIndex = cellElement.getAttribute('data-row');
             const colIndex = cellElement.getAttribute('data-col');
@@ -431,7 +416,7 @@
                 newStatus = 'غائب';
             }
 
-            // Optimistic UI update for instantaneous click response
+            // Optimistic UI update
             if (newStatus === 'حاضر') {
                 cellElement.innerHTML = `<span class="badge-present">حاضر</span>`;
             } else {
