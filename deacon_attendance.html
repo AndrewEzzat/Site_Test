@@ -139,12 +139,11 @@
             border-color: var(--primary);
         }
 
-        /* Unified Single Table Container */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
-            overflow: auto; /* Handles both vertical and horizontal scrolling naturally */
+            overflow: auto;
             max-height: 80vh;
             -webkit-overflow-scrolling: touch;
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
@@ -168,7 +167,6 @@
             background-color: #ffffff;
         }
 
-        /* Sticky Header Row */
         th {
             background: var(--teal-dark);
             color: #ffffff;
@@ -179,7 +177,7 @@
             border-bottom: 2px solid var(--border);
         }
 
-        /* Strict width for ID column */
+        /* Strict compact width for ID column */
         .col-id {
             width: 38px !important;
             min-width: 38px !important;
@@ -199,21 +197,19 @@
             background: var(--teal-dark);
         }
 
-        /* Freeze Column 2 (الاسم) - Offset matches column 1 width (38px) */
+        /* Freeze Column 2 (الاسم) - Fits data neatly without excess width */
         td:nth-child(2), th:nth-child(2) {
             position: sticky;
             right: 38px;
             z-index: 20;
             background-color: var(--frozen-bg);
             text-align: right;
-            min-width: 130px;
         }
         th:nth-child(2) {
             z-index: 40;
             background: var(--teal-dark);
         }
 
-        /* Total / Summary Highlights */
         .total-cell {
             background-color: var(--teal-light) !important;
             color: #0f172a !important;
@@ -364,9 +360,20 @@
             return val;
         }
 
+        // Fixed forward/backward merge propagation for RTL headers
         function processMergedHeaders(headersRow) {
             let processed = [...headersRow];
             let lastValidText = '';
+            // First pass: propagate left-to-right (for RTL merged cells)
+            for (let i = 0; i < processed.length; i++) {
+                let val = formatCellValue(processed[i]);
+                if (val !== '-' && val !== '') {
+                    lastValidText = val;
+                } else if (lastValidText !== '') {
+                    processed[i] = lastValidText;
+                }
+            }
+            // Second pass: fill any remaining blanks backwards if needed
             for (let i = processed.length - 1; i >= 0; i--) {
                 let val = formatCellValue(processed[i]);
                 if (val !== '-' && val !== '') {
@@ -412,6 +419,7 @@
                                 html += `<th class="${headerClass} ${idClass}">${formatted}</th>`;
                             } else {
                                 let displayCell = formatted;
+                                // Strictly ensure frozen columns (1 & 2) and total columns are NOT editable
                                 let editable = !isFrozen && !isTotal ? 'editable-cell' : '';
                                 
                                 if (formatted === 'غائب' || formatted === 'غ') {
@@ -423,12 +431,12 @@
                                 const actualRowInSheet = sheetStartRowIndex + rowIndex;
                                 const actualColInSheet = colIndex + 1;
                                 
-                                let cellStyleClass = isTotal ? 'total-cell' : editable;
+                                let cellStyleClass = isTotal ? 'total-cell' : '';
 
-                                html += `<td class="${idClass} ${cellStyleClass}" 
+                                html += `<td class="${idClass} ${cellStyleClass} ${editable}" 
                                             data-row="${actualRowInSheet}" 
                                             data-col-idx="${actualColInSheet}"
-                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}', ${isTotal || isFrozen})">${displayCell}</td>`;
+                                            onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
                             }
                         });
                         html += '</tr>';
@@ -441,12 +449,13 @@
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
                 }
             } catch (err) {
-                container.innerHTML = `<p class="error-msg">خطأ في الاتصال.</p>`;
+                container.innerHTML = `<p class="error-msg">فشل الاتصال بالخادم.</p>`;
             }
         }
 
-        async function toggleAttendance(cellElement, tabName, isLocked) {
-            if (isLocked || !cellElement.classList.contains('editable-cell')) return;
+        async function toggleAttendance(cellElement, tabName) {
+            // Strictly guard: only toggle if cell has the editable-cell class
+            if (!cellElement || !cellElement.classList.contains('editable-cell')) return;
 
             const rowIndex = cellElement.getAttribute('data-row');
             const colIndex = cellElement.getAttribute('data-col-idx');
