@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Enabled full pinch-to-zoom for two-finger gestures on phones -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -13,7 +14,8 @@
             --card-bg: #ffffff;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --border: #e2e8f0;
+            --border: #cbd5e1; /* Clear explicit border color */
+            --border-light: #e2e8f0;
         }
 
         * {
@@ -29,13 +31,14 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            touch-action: manipulation;
         }
 
-        /* Compact Mobile Header */
+        /* Compact Header */
         .header {
             background: #ffffff;
             border-bottom: 1px solid var(--border);
-            padding: 12px 16px;
+            padding: 10px 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -48,7 +51,7 @@
             background: #f1f5f9;
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 6px 12px;
+            padding: 5px 10px;
             font-weight: 600;
             font-size: 12px;
             border-radius: 6px;
@@ -63,34 +66,34 @@
         }
 
         .container {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 0 12px;
+            max-width: 100%;
+            margin: 14px auto;
+            padding: 0 10px;
             width: 100%;
             flex: 1;
         }
 
-        /* Password Modal Area */
+        /* Password Form */
         .auth-card {
             background: #ffffff;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 24px 16px;
-            max-width: 380px;
-            margin: 40px auto;
+            padding: 20px 16px;
+            max-width: 340px;
+            margin: 30px auto;
             text-align: center;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
 
         .auth-card h3 {
-            font-size: 16px;
+            font-size: 15px;
             color: var(--text-main);
             margin-bottom: 12px;
         }
 
         .auth-card input {
             width: 100%;
-            padding: 10px;
+            padding: 8px 12px;
             font-size: 14px;
             border: 1px solid var(--border);
             border-radius: 8px;
@@ -104,71 +107,137 @@
             background: var(--primary);
             color: #ffffff;
             border: none;
-            padding: 10px;
+            padding: 8px 12px;
             border-radius: 8px;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
         }
 
-        /* Tabs Nav */
+        /* Dynamic Tabs Bar */
         .tabs-nav {
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin-bottom: 16px;
+            gap: 6px;
+            margin-bottom: 12px;
             flex-wrap: wrap;
         }
 
         .tab-btn {
             background: #ffffff;
             border: 1px solid var(--border);
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             color: var(--text-muted);
+            transition: all 0.2s;
         }
 
         .tab-btn.active {
             background: var(--primary);
             color: #ffffff;
             border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
         }
 
-        /* Mobile Table Card */
+        /* Mobile Attendance Table Container */
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
+            border-radius: 10px;
+            padding: 0;
             overflow-x: auto;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            -webkit-overflow-scrolling: touch;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            max-height: 75vh;
         }
 
         table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: right;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: max-content;
+            min-width: 100%;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        /* Explicit Column & Row Borders */
+        th, td {
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+            border-left: 1px solid var(--border);
             white-space: nowrap;
         }
 
-        th, td {
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
-            font-size: 13px;
+        th:first-child, td:first-child {
+            border-right: 1px solid var(--border);
         }
 
+        /* Sticky Table Header */
         th {
             background: var(--primary-light);
             color: var(--primary);
             font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            border-bottom: 2px solid var(--border);
+        }
+
+        /* Sticky First Column (Deacon Names) */
+        td:first-child, th:first-child {
+            position: sticky;
+            right: 0;
+            background: #ffffff;
+            z-index: 10;
+            font-weight: 700;
+            text-align: right;
+            box-shadow: -2px 0 4px rgba(0,0,0,0.03);
+        }
+
+        th:first-child {
+            z-index: 30;
+            background: var(--primary-light);
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+        
+        tr:nth-child(even) td:first-child {
+            background-color: #f8fafc;
+        }
+
+        tr:hover td {
+            background-color: #eff6ff !important;
+        }
+
+        /* Professional Neutral Badge for Attendance Marks */
+        .badge-present {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 11px;
+            display: inline-block;
+        }
+
+        .badge-absent {
+            background-color: #f1f5f9; /* Neutral slate gray background instead of red */
+            color: #475569; /* Soft dark slate text */
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 11px;
+            display: inline-block;
         }
 
         .loading-msg, .error-msg {
             text-align: center;
-            padding: 30px;
+            padding: 24px;
             color: var(--text-muted);
             font-size: 13px;
         }
@@ -181,19 +250,19 @@
     <div class="header">
         <a href="deacons.html" class="back-btn">⬅ عودة</a>
         <h2>سجل الحضور والغياب</h2>
-        <div style="width: 50px;"></div>
+        <div style="width: 40px;"></div>
     </div>
 
     <div class="container">
-        <!-- Password Form (Always shown fresh on every load) -->
+        <!-- Password Form (Prompted fresh on every visit) -->
         <div id="authSection" class="auth-card">
             <h3>🔒 يرجى إدخال كلمة المرور</h3>
             <input type="password" id="passwordInput" placeholder="كلمة المرور" autofocus>
             <button onclick="authenticate()">دخول</button>
-            <p id="authError" class="error-msg" style="display:none; padding:10px 0 0 0;"></p>
+            <p id="authError" class="error-msg" style="display:none; padding:8px 0 0 0;"></p>
         </div>
 
-        <!-- Attendance Dashboard Area (Hidden until verified) -->
+        <!-- Attendance Dashboard Area -->
         <div id="attendanceSection" style="display: none;">
             <div class="tabs-nav" id="tabsNav"></div>
             <div class="table-card" id="tableContainer"></div>
@@ -202,7 +271,7 @@
 
     <script src="deacons-config.js"></script>
     <script>
-        // Password is kept exclusively in runtime memory (never saved to sessionStorage/localStorage)
+        // Kept purely in temporary memory during runtime
         let userPassword = '';
 
         async function authenticate() {
@@ -217,7 +286,7 @@
                 const result = await response.json();
 
                 if (result.status === "success") {
-                    userPassword = inputPass; // Temporary runtime variable only
+                    userPassword = inputPass;
                     showDashboard();
                 } else {
                     authError.innerText = "كلمة المرور غير صحيحة";
@@ -259,6 +328,20 @@
             }
         }
 
+        // Helper function to strip time from Google Sheets date values
+        function formatCellValue(val) {
+            if (val === null || val === undefined || val === "") return '-';
+            
+            // Check if string is an ISO Date string (e.g., 2026-10-25T22:00:00.000Z)
+            if (typeof val === 'string' && val.includes('T') && val.includes('Z')) {
+                const d = new Date(val);
+                if (!isNaN(d.getTime())) {
+                    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                }
+            }
+            return val;
+        }
+
         async function loadAttendanceData(tabName) {
             const container = document.getElementById('tableContainer');
             container.innerHTML = `<p class="loading-msg">جاري تحميل ${tabName}...</p>`;
@@ -270,14 +353,29 @@
                 if (result.status === "success" && result.data && result.data.length > 0) {
                     let rows = result.data;
                     let html = '<table>';
+                    
                     rows.forEach((row, rowIndex) => {
                         html += '<tr>';
-                        row.forEach(cell => {
-                            let content = cell !== "" ? cell : '-';
-                            html += rowIndex === 0 ? `<th>${content}</th>` : `<td>${content}</td>`;
+                        row.forEach((cell, colIndex) => {
+                            let formatted = formatCellValue(cell);
+                            
+                            if (rowIndex === 0) {
+                                html += `<th>${formatted}</th>`;
+                            } else {
+                                // Smart subtle styling for attendance status
+                                let displayCell = formatted;
+                                if (formatted === 'غائب' || formatted === 'غ') {
+                                    displayCell = `<span class="badge-absent">${formatted}</span>`;
+                                } else if (formatted === 'حاضر' || formatted === 'ح') {
+                                    displayCell = `<span class="badge-present">${formatted}</span>`;
+                                }
+                                
+                                html += `<td>${displayCell}</td>`;
+                            }
                         });
                         html += '</tr>';
                     });
+                    
                     html += '</table>';
                     container.innerHTML = html;
                 } else {
@@ -293,8 +391,6 @@
             if (btnElement) btnElement.classList.add('active');
             loadAttendanceData(tabName);
         }
-
-        // Onload intentionally left clean so window refresh always requires password input.
     </script>
 </body>
 </html>
