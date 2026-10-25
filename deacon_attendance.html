@@ -18,6 +18,7 @@
             --teal-mid: #6acad1;
             --teal-light: #8af0f8;
             --frozen-bg: #f0fdff;
+            --month-border: 3px solid #0f172a; /* Thick distinct border for month separation */
         }
 
         * {
@@ -197,7 +198,7 @@
             background: var(--teal-dark);
         }
 
-        /* Freeze Column 2 (الاسم) - Fits data neatly without excess width */
+        /* Freeze Column 2 (الاسم) */
         td:nth-child(2), th:nth-child(2) {
             position: sticky;
             right: 38px;
@@ -219,6 +220,11 @@
         .total-header {
             background-color: var(--teal-mid) !important;
             color: #ffffff !important;
+        }
+
+        /* Month separator class applied dynamically */
+        .month-separator {
+            border-left: var(--month-border) !important;
         }
 
         tr:nth-child(even) td:not(:nth-child(1)):not(:nth-child(2)):not(.total-cell) { 
@@ -360,11 +366,9 @@
             return val;
         }
 
-        // Fixed forward/backward merge propagation for RTL headers
         function processMergedHeaders(headersRow) {
             let processed = [...headersRow];
             let lastValidText = '';
-            // First pass: propagate left-to-right (for RTL merged cells)
             for (let i = 0; i < processed.length; i++) {
                 let val = formatCellValue(processed[i]);
                 if (val !== '-' && val !== '') {
@@ -373,7 +377,6 @@
                     processed[i] = lastValidText;
                 }
             }
-            // Second pass: fill any remaining blanks backwards if needed
             for (let i = processed.length - 1; i >= 0; i--) {
                 let val = formatCellValue(processed[i]);
                 if (val !== '-' && val !== '') {
@@ -383,6 +386,13 @@
                 }
             }
             return processed;
+        }
+
+        // Helper to extract "YYYY-MM" from a header date string for month separation
+        function extractMonth(headerText) {
+            if (!headerText) return '';
+            const match = headerText.match(/(\d{4}-\d{2})/);
+            return match ? match[1] : '';
         }
 
         async function loadAttendanceData(tabName) {
@@ -402,6 +412,19 @@
                         rows[0] = processMergedHeaders(rows[0]);
                     }
 
+                    // Pre-calculate month changes across header columns to determine separators
+                    let monthSeparators = new Array(rows[0].length).fill(false);
+                    if (rows.length > 0) {
+                        let prevMonth = '';
+                        for (let c = 2; c < rows[0].length; c++) {
+                            let m = extractMonth(String(rows[0][c]));
+                            if (m && prevMonth && m !== prevMonth) {
+                                monthSeparators[c] = true; // Mark this column as the start of a new month
+                            }
+                            if (m) prevMonth = m;
+                        }
+                    }
+
                     let html = '<table>';
                     
                     rows.forEach((row, rowIndex) => {
@@ -410,21 +433,26 @@
                             let formatted = formatCellValue(cell);
                             let isFrozen = colIndex < 2; // Freeze first 2 columns
                             let idClass = colIndex === 0 ? 'col-id' : '';
+                            let monthClass = monthSeparators[colIndex] ? 'month-separator' : '';
                             
                             const textVal = String(formatted).toLowerCase();
                             let isTotal = textVal.includes('إجمالي') || textVal.includes('مجموع') || textVal.includes('total') || textVal.includes('المجموع') || textVal.includes('الإجمالي');
 
                             if (rowIndex === 0) {
                                 let headerClass = isTotal ? 'total-header' : '';
-                                html += `<th class="${headerClass} ${idClass}">${formatted}</th>`;
+                                html += `<th class="${headerClass} ${idClass} ${monthClass}">${formatted}</th>`;
                             } else {
                                 let displayCell = formatted;
-                                // Strictly ensure frozen columns (1 & 2) and total columns are NOT editable
-                                let editable = !isFrozen && !isTotal ? 'editable-cell' : '';
                                 
-                                if (formatted === 'غائب' || formatted === 'غ') {
+                                // Strictly determine if cell is a valid attendance toggle cell
+                                let rawStr = String(formatted).trim();
+                                let isAttendanceCell = (rawStr === 'حاضر' || rawStr === 'غائب' || rawStr === 'ح' || rawStr === 'غ' || rawStr === '-');
+                                
+                                let editable = (!isFrozen && !isTotal && isAttendanceCell) ? 'editable-cell' : '';
+                                
+                                if (rawStr === 'غائب' || rawStr === 'غ') {
                                     displayCell = `<span class="badge-absent">غائب</span>`;
-                                } else if (formatted === 'حاضر' || formatted === 'ح') {
+                                } else if (rawStr === 'حاضر' || rawStr === 'ح') {
                                     displayCell = `<span class="badge-present">حاضر</span>`;
                                 }
 
@@ -433,7 +461,7 @@
                                 
                                 let cellStyleClass = isTotal ? 'total-cell' : '';
 
-                                html += `<td class="${idClass} ${cellStyleClass} ${editable}" 
+                                html += `<td class="${idClass} ${cellStyleClass} ${editable} ${monthClass}" 
                                             data-row="${actualRowInSheet}" 
                                             data-col-idx="${actualColInSheet}"
                                             onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
@@ -449,12 +477,12 @@
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
                 }
             } catch (err) {
-                container.innerHTML = `<p class="error-msg">فشل الاتصال بالخادم.</p>`;
+                container.innerHTML = `<p class="error-msg">خطأ في الاتصال.</p>`;
             }
         }
 
         async function toggleAttendance(cellElement, tabName) {
-            // Strictly guard: only toggle if cell has the editable-cell class
+            // Strict guard: only proceed if cell has editable-cell class
             if (!cellElement || !cellElement.classList.contains('editable-cell')) return;
 
             const rowIndex = cellElement.getAttribute('data-row');
