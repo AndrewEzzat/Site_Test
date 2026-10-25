@@ -18,7 +18,8 @@
             --teal-mid: #6acad1;
             --teal-light: #8af0f8;
             --frozen-bg: #f0fdff;
-            --month-border: 3px solid #0f172a; /* Thick distinct border for month separation */
+            /* Refined medium-thick border for months and totals */
+            --medium-border: 2px solid #334155; 
         }
 
         * {
@@ -178,7 +179,6 @@
             border-bottom: 2px solid var(--border);
         }
 
-        /* Strict compact width for ID column */
         .col-id {
             width: 38px !important;
             min-width: 38px !important;
@@ -222,9 +222,17 @@
             color: #ffffff !important;
         }
 
-        /* Month separator class applied dynamically */
+        /* Medium thick borders for month separation and total columns/rows */
         .month-separator {
-            border-left: var(--month-border) !important;
+            border-left: var(--medium-border) !important;
+        }
+
+        .total-separator-col {
+            border-left: var(--medium-border) !important;
+        }
+
+        .total-separator-row td, .total-separator-row th {
+            border-top: var(--medium-border) !important;
         }
 
         tr:nth-child(even) td:not(:nth-child(1)):not(:nth-child(2)):not(.total-cell) { 
@@ -388,11 +396,15 @@
             return processed;
         }
 
-        // Helper to extract "YYYY-MM" from a header date string for month separation
         function extractMonth(headerText) {
             if (!headerText) return '';
             const match = headerText.match(/(\d{4}-\d{2})/);
             return match ? match[1] : '';
+        }
+
+        function checkIfTotalRowOrCol(text) {
+            const t = String(text).toLowerCase();
+            return t.includes('إجمالي') || t.includes('مجموع') || t.includes('total') || t.includes('المجموع') || t.includes('الإجمالي');
         }
 
         async function loadAttendanceData(tabName) {
@@ -412,43 +424,68 @@
                         rows[0] = processMergedHeaders(rows[0]);
                     }
 
-                    // Pre-calculate month changes across header columns to determine separators
+                    // Identify month separators and total separators
                     let monthSeparators = new Array(rows[0].length).fill(false);
+                    let totalCols = new Array(rows[0].length).fill(false);
+                    let totalRows = new Array(rows.length).fill(false);
+
                     if (rows.length > 0) {
                         let prevMonth = '';
                         for (let c = 2; c < rows[0].length; c++) {
-                            let m = extractMonth(String(rows[0][c]));
-                            if (m && prevMonth && m !== prevMonth) {
-                                monthSeparators[c] = true; // Mark this column as the start of a new month
+                            let headerVal = String(rows[0][c]);
+                            if (checkIfTotalRowOrCol(headerVal)) {
+                                totalCols[c] = true;
+                            } else {
+                                let m = extractMonth(headerVal);
+                                if (m && prevMonth && m !== prevMonth) {
+                                    monthSeparators[c] = true;
+                                }
+                                if (m) prevMonth = m;
                             }
-                            if (m) prevMonth = m;
+                        }
+                    }
+
+                    for (let r = 0; r < rows.length; r++) {
+                        let rowLabel = String(rows[r][1] || rows[r][0]);
+                        if (checkIfTotalRowOrCol(rowLabel)) {
+                            totalRows[r] = true;
                         }
                     }
 
                     let html = '<table>';
                     
                     rows.forEach((row, rowIndex) => {
-                        html += '<tr>';
+                        let isRowTotal = totalRows[rowIndex];
+                        let rowClass = isRowTotal ? 'total-separator-row' : '';
+                        html += `<tr class="${rowClass}">`;
+
                         row.forEach((cell, colIndex) => {
                             let formatted = formatCellValue(cell);
-                            let isFrozen = colIndex < 2; // Freeze first 2 columns
+                            let isFrozen = colIndex < 2;
                             let idClass = colIndex === 0 ? 'col-id' : '';
-                            let monthClass = monthSeparators[colIndex] ? 'month-separator' : '';
                             
-                            const textVal = String(formatted).toLowerCase();
-                            let isTotal = textVal.includes('إجمالي') || textVal.includes('مجموع') || textVal.includes('total') || textVal.includes('المجموع') || textVal.includes('الإجمالي');
+                            let isColTotal = totalCols[colIndex];
+                            let textVal = String(formatted).toLowerCase();
+                            let isTotalCell = isColTotal || isRowTotal || checkIfTotalRowOrCol(textVal);
+
+                            // Apply medium thick separator class for month or total column
+                            let extraClass = '';
+                            if (monthSeparators[colIndex] && !isTotalCell) {
+                                extraClass += ' month-separator';
+                            }
+                            if (isTotalCell && colIndex > 1 && !totalCols[colIndex - 1]) {
+                                extraClass += ' total-separator-col';
+                            }
 
                             if (rowIndex === 0) {
-                                let headerClass = isTotal ? 'total-header' : '';
-                                html += `<th class="${headerClass} ${idClass} ${monthClass}">${formatted}</th>`;
+                                let headerClass = isTotalCell ? 'total-header' : '';
+                                html += `<th class="${headerClass} ${idClass} ${extraClass}">${formatted}</th>`;
                             } else {
                                 let displayCell = formatted;
-                                
-                                // Strictly determine if cell is a valid attendance toggle cell
                                 let rawStr = String(formatted).trim();
                                 let isAttendanceCell = (rawStr === 'حاضر' || rawStr === 'غائب' || rawStr === 'ح' || rawStr === 'غ' || rawStr === '-');
                                 
-                                let editable = (!isFrozen && !isTotal && isAttendanceCell) ? 'editable-cell' : '';
+                                let editable = (!isFrozen && !isTotalCell && isAttendanceCell) ? 'editable-cell' : '';
                                 
                                 if (rawStr === 'غائب' || rawStr === 'غ') {
                                     displayCell = `<span class="badge-absent">غائب</span>`;
@@ -459,9 +496,9 @@
                                 const actualRowInSheet = sheetStartRowIndex + rowIndex;
                                 const actualColInSheet = colIndex + 1;
                                 
-                                let cellStyleClass = isTotal ? 'total-cell' : '';
+                                let cellStyleClass = isTotalCell ? 'total-cell' : '';
 
-                                html += `<td class="${idClass} ${cellStyleClass} ${editable} ${monthClass}" 
+                                html += `<td class="${idClass} ${cellStyleClass} ${editable} ${extraClass}" 
                                             data-row="${actualRowInSheet}" 
                                             data-col-idx="${actualColInSheet}"
                                             onclick="toggleAttendance(this, '${tabName.replace(/'/g, "\\'")}')">${displayCell}</td>`;
@@ -482,7 +519,6 @@
         }
 
         async function toggleAttendance(cellElement, tabName) {
-            // Strict guard: only proceed if cell has editable-cell class
             if (!cellElement || !cellElement.classList.contains('editable-cell')) return;
 
             const rowIndex = cellElement.getAttribute('data-row');
