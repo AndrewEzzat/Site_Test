@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مناهج الألحان - مدرسة الشمامسة</title>
+    <title>مناهج القبطي - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -26,17 +26,16 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         /* Top Header */
         .header {
             background: #ffffff;
             border-bottom: 1px solid var(--border);
-            padding: 12px 20px;
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -55,80 +54,97 @@
         }
 
         /* Main Container */
-        .main-container {
-            display: flex;
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+            width: 100%;
             flex: 1;
-            height: calc(100vh - 61px);
-            overflow: hidden;
         }
 
-        /* Sidebar for Dynamic Files */
-        .sidebar {
-            width: 280px;
-            background: #ffffff;
-            border-left: 1px solid var(--border);
-            padding: 16px;
+        /* Breadcrumb Navigation Bar */
+        .breadcrumb {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
-        }
-
-        .sidebar h3 {
-            font-size: 15px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            padding-right: 4px;
-        }
-
-        .item-btn {
-            background: #f8fafc;
-            border: 1px solid var(--border);
-            padding: 12px 16px;
-            border-radius: 10px;
-            text-align: right;
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-main);
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
-        .item-btn:hover {
-            background: var(--primary-light);
-            border-color: var(--primary);
+        .breadcrumb button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            font-size: 15px;
         }
 
-        .item-btn.active {
-            background: var(--primary);
-            color: #ffffff;
-            border-color: var(--primary);
+        .breadcrumb button:hover {
+            text-decoration: underline;
         }
 
-        /* Content Viewer Area */
-        .viewer-area {
-            flex: 1;
+        /* Grid View for Folders & Files */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .card-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
             display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .card-item:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 12px rgba(37, 99, 235, 0.08);
+            background: var(--primary-light);
+        }
+
+        .card-icon {
+            font-size: 28px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            word-break: break-word;
+        }
+
+        /* PDF Preview Modal / Viewer Area */
+        .viewer-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
             flex-direction: column;
-            background: #e2e8f0;
-            position: relative;
+            height: 650px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
         }
 
         .viewer-toolbar {
             background: #ffffff;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-
-        .viewer-toolbar h4 {
-            font-size: 16px;
-            color: var(--text-main);
         }
 
         .download-btn {
@@ -142,30 +158,23 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            transition: background 0.2s;
         }
 
         .download-btn:hover {
             background: #15803d;
         }
 
-        .iframe-container {
-            flex: 1;
-            width: 100%;
-            height: 100%;
-        }
-
         iframe {
             width: 100%;
-            height: 100%;
+            flex: 1;
             border: none;
         }
 
-        .loading-text {
+        .section-heading {
+            font-size: 16px;
+            font-weight: 700;
             color: var(--text-muted);
-            font-size: 13px;
-            text-align: center;
-            padding: 20px;
+            margin: 20px 0 12px 0;
         }
     </style>
 </head>
@@ -174,77 +183,158 @@
     <!-- Header -->
     <div class="header">
         <a href="deacons.html" class="back-btn">⬅ عودة لقسم الشمامسة</a>
-        <h2 style="font-size: 16px; color: var(--primary);">مناهج الألحان والطقوس (تحديث تلقائي)</h2>
+        <h2 style="font-size: 16px; color: var(--primary);" id="pageHeaderTitle">مناهج اللغة القبطية</h2>
         <div></div>
     </div>
 
-    <!-- Main View -->
-    <div class="main-container">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar" id="sidebarItems">
-            <h3>ملفات الألحان</h3>
-            <p class="loading-text">جاري تحميل الملفات من جوجل درايف...</p>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Breadcrumb Bar -->
+        <div class="breadcrumb" id="breadcrumbBar">
+            <button onclick="loadFolder(ROOT_FOLDER_ID, 'الرئيسية')">الرئيسية</button>
         </div>
 
-        <!-- Viewer & Download Area -->
-        <div class="viewer-area">
+        <!-- Folders Section -->
+        <div id="foldersSection" style="display:none;">
+            <div class="section-heading">المجلدات الفرعية</div>
+            <div class="grid-container" id="foldersGrid"></div>
+        </div>
+
+        <!-- Files Section -->
+        <div id="filesSection" style="display:none;">
+            <div class="section-heading">الملفات الدراسية</div>
+            <div class="grid-container" id="filesGrid"></div>
+        </div>
+
+        <p id="loadingMsg" style="text-align:center; padding: 40px; color: var(--text-muted);">جاري تحميل المحتوى...</p>
+
+        <!-- PDF Viewer Container -->
+        <div class="viewer-card" id="viewerCard">
             <div class="viewer-toolbar">
-                <h4 id="fileTitle">اختر لحناً</h4>
-                <a id="downloadLink" href="#" class="download-btn" target="_blank" style="display: none;">
-                    📥 تحميل الملف
-                </a>
+                <h4 id="fileTitle">عرض الملف</h4>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <a id="downloadLink" href="#" class="download-btn" target="_blank">📥 تحميل</a>
+                    <button onclick="closeViewer()" style="background:#e2e8f0; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700;">✕ إغلاق</button>
+                </div>
             </div>
-            <div class="iframe-container">
-                <iframe id="pdfViewer" src=""></iframe>
-            </div>
+            <iframe id="pdfViewer" src=""></iframe>
         </div>
     </div>
 
-    <!-- Load Shared Deacons Config -->
+    <!-- Load Config -->
     <script src="deacons-config.js"></script>
     <script>
-        async function fetchHymnsFiles() {
-            const sidebar = document.getElementById('sidebarItems');
+        // Set your Root Folder IDs here (Coptic vs Hymns)
+        const ROOT_FOLDER_ID = "122v-vfQJSunVXwSTvfZCc1Qkk2n5FKp0"; // Change to Hymns ID for deacon_hymns.html
+        
+        let historyStack = [{ id: ROOT_FOLDER_ID, name: 'الرئيسية' }];
+
+        async function loadFolder(folderId, folderName) {
+            document.getElementById('viewerCard').style.display = 'none';
+            document.getElementById('loadingMsg').style.display = 'block';
+            document.getElementById('loadingMsg').innerText = `جاري تحميل ${folderName}...`;
+            
+            document.getElementById('foldersSection').style.display = 'none';
+            document.getElementById('filesSection').style.display = 'none';
+
             try {
-                const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getHymnsFiles`);
+                const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getFolderContents&folderId=${folderId}`);
                 const data = await response.json();
 
-                if (data.status === "success" && data.files.length > 0) {
-                    let html = '<h3>ملفات الألحان</h3>';
-                    data.files.forEach((file, index) => {
-                        const activeClass = index === 0 ? 'active' : '';
-                        html += `<button class="item-btn ${activeClass}" onclick="loadFile('${file.name.replace(/'/g, "\\'")}', '${file.id}', this)">
-                                    <span>${file.name}</span> 🎵
-                                 </button>`;
-                    });
-                    sidebar.innerHTML = html;
+                document.getElementById('loadingMsg').style.display = 'none';
 
-                    loadFile(data.files[0].name, data.files[0].id, sidebar.querySelector('.item-btn'));
+                if (data.status === "success") {
+                    updateBreadcrumb(folderId, folderName);
+
+                    // Render Subfolders
+                    const foldersGrid = document.getElementById('foldersGrid');
+                    if (data.folders.length > 0) {
+                        let fHtml = '';
+                        data.folders.forEach(folder => {
+                            fHtml += `<div class="card-item" onclick="navigateToFolder('${folder.id}', '${folder.name.replace(/'/g, "\\'")}')">
+                                        <span class="card-icon">📁</span>
+                                        <span class="card-title">${folder.name}</span>
+                                      </div>`;
+                        });
+                        foldersGrid.innerHTML = fHtml;
+                        document.getElementById('foldersSection').style.display = 'block';
+                    }
+
+                    // Render Files
+                    const filesGrid = document.getElementById('filesGrid');
+                    if (data.files.length > 0) {
+                        let fiHtml = '';
+                        data.files.forEach(file => {
+                            fiHtml += `<div class="card-item" onclick="openFile('${file.id}', '${file.name.replace(/'/g, "\\'")}')">
+                                         <span class="card-icon">📄</span>
+                                         <span class="card-title">${file.name}</span>
+                                       </div>`;
+                        });
+                        filesGrid.innerHTML = fiHtml;
+                        document.getElementById('filesSection').style.display = 'block';
+                    }
+
+                    if (data.folders.length === 0 && data.files.length === 0) {
+                        document.getElementById('loadingMsg').style.display = 'block';
+                        document.getElementById('loadingMsg').innerText = 'هذا المجلد فارغ.';
+                    }
+
                 } else {
-                    sidebar.innerHTML = '<h3>ملفات الألحان</h3><p class="loading-text">لا توجد ملفات في هذا المجلد.</p>';
+                    document.getElementById('loadingMsg').style.display = 'block';
+                    document.getElementById('loadingMsg').innerText = 'حدث خطأ أثناء جلب محتويات المجلد.';
                 }
-            } catch (error) {
-                console.error("Error fetching files:", error);
-                sidebar.innerHTML = '<h3>ملفات الألحان</h3><p class="loading-text" style="color:red;">فشل جلب الملفات. تأكد من رابط الـ Web App.</p>';
+            } catch (err) {
+                console.error(err);
+                document.getElementById('loadingMsg').style.display = 'block';
+                document.getElementById('loadingMsg').innerText = 'فشل الاتصال بالخادم.';
             }
         }
 
-        function loadFile(fileName, fileId, btnElement) {
-            document.querySelectorAll('.item-btn').forEach(b => b.classList.remove('active'));
-            if (btnElement) btnElement.classList.add('active');
+        function navigateToFolder(id, name) {
+            historyStack.push({ id, name });
+            loadFolder(id, name);
+        }
 
+        function updateBreadcrumb(currentId, currentName) {
+            const breadcrumbBar = document.getElementById('breadcrumbBar');
+            // Find index in history
+            const index = historyStack.findIndex(item => item.id === currentId);
+            if (index !== -1) {
+                historyStack = historyStack.slice(0, index + 1);
+            }
+
+            let html = '';
+            historyStack.forEach((item, idx) => {
+                if (idx > 0) html += ' / ';
+                if (idx === historyStack.length - 1) {
+                    html += `<span>${item.name}</span>`;
+                } else {
+                    html += `<button onclick="loadFolder('${item.id}', '${item.name}')">${item.name}</button>`;
+                }
+            });
+            breadcrumbBar.innerHTML = html;
+        }
+
+        function openFile(fileId, fileName) {
             document.getElementById('fileTitle').innerText = fileName;
             document.getElementById('pdfViewer').src = `https://drive.google.com/file/d/${fileId}/preview`;
             
             const downloadBtn = document.getElementById('downloadLink');
             downloadBtn.href = `https://drive.google.com/uc?export=download&id=${fileId}`;
-            downloadBtn.style.display = 'inline-flex';
+            
+            const viewerCard = document.getElementById('viewerCard');
+            viewerCard.style.display = 'flex';
+            viewerCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function closeViewer() {
+            document.getElementById('viewerCard').style.display = 'none';
+            document.getElementById('pdfViewer').src = '';
         }
 
         window.onload = function() {
-            fetchHymnsFiles();
+            loadFolder(ROOT_FOLDER_ID, 'الرئيسية');
         };
     </script>
-
 </body>
 </html>
