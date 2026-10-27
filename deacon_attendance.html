@@ -185,7 +185,7 @@
             color: #ffffff;
             font-weight: 600;
             position: sticky;
-            top: 35px; /* Matches exact height of Row 1 */
+            top: 35px;
             z-index: 30;
             border-bottom: 2px solid var(--border);
             padding: 4px 6px;
@@ -218,7 +218,7 @@
             text-align: center !important;
         }
 
-        /* Freeze Column 1 (م) across both sticky header rows */
+        /* Freeze Column 1 (م) */
         td:nth-child(1), tr:nth-child(1) th:nth-child(1), tr:nth-child(2) th:nth-child(1) {
             position: sticky;
             right: 0;
@@ -231,7 +231,7 @@
         tr:nth-child(1) th:nth-child(1) { background: var(--teal-dark); }
         tr:nth-child(2) th:nth-child(1) { background: var(--teal-mid); }
 
-        /* Freeze Column 2 (الاسم) across both sticky header rows */
+        /* Freeze Column 2 (الاسم) */
         td:nth-child(2), tr:nth-child(1) th:nth-child(2), tr:nth-child(2) th:nth-child(2) {
             position: sticky;
             right: 38px;
@@ -256,12 +256,12 @@
             color: #ffffff !important;
         }
 
-        /* Correct RTL borders for months, totals, and proper end boundary */
+        /* Consistent Month and Total borders */
         .month-separator {
             border-right: var(--medium-border) !important;
         }
 
-        .total-separator-col {
+        .end-border-col {
             border-left: var(--medium-border) !important;
         }
 
@@ -493,9 +493,9 @@
             let rows = [...globalRows];
             if (rows.length === 0) return;
 
-            let headerRow = rows[0];       // Row 1: Dates / Titles
-            let filterRow = rows[1];       // Row 2: Categories / Subheaders
-            let dataRows = rows.slice(2);  // Actual data rows starting from row 3
+            let headerRow = rows[0];       
+            let filterRow = rows[1];       
+            let dataRows = rows.slice(2);  
 
             let regularRows = [];
             let totalRowsData = [];
@@ -509,7 +509,6 @@
                 }
             });
 
-            // Apply filters on regular rows
             let filteredRows = regularRows.filter(item => {
                 for (let colIdx in activeFilters) {
                     let filterVal = activeFilters[colIdx];
@@ -521,7 +520,6 @@
                 return true;
             });
 
-            // Apply sorting on regular rows
             if (activeSort.colIndex !== null) {
                 let cIdx = activeSort.colIndex;
                 let dir = activeSort.direction === 'asc' ? 1 : -1;
@@ -537,9 +535,9 @@
             let monthSeparators = new Array(headerRow.length).fill(false);
             let totalCols = new Array(headerRow.length).fill(false);
             let totalRowsIndices = new Array(finalRowsToDisplay.length).fill(false);
-            let firstMonthFound = false;
 
             let prevMonth = '';
+            // Scan from right to left (RTL order) and mark the first column where a new month starts
             for (let c = headerRow.length - 1; c >= 2; c--) {
                 let headerVal = String(headerRow[c]);
                 if (checkIfTotalRowOrCol(headerVal)) {
@@ -547,11 +545,7 @@
                 } else {
                     let m = extractMonth(headerVal);
                     if (m) {
-                        if (!firstMonthFound) {
-                            monthSeparators[c] = true; 
-                            firstMonthFound = true;
-                            prevMonth = m;
-                        } else if (m !== prevMonth) {
+                        if (m !== prevMonth) {
                             monthSeparators[c] = true; 
                             prevMonth = m;
                         }
@@ -563,6 +557,15 @@
                 let rowLabel = String(finalRowsToDisplay[r][1] || finalRowsToDisplay[r][0]);
                 if (checkIfTotalRowOrCol(rowLabel)) {
                     totalRowsIndices[r] = true;
+                }
+            }
+
+            let lastRegularColIndex = -1;
+            for (let c = headerRow.length - 1; c >= 2; c--) {
+                let headerVal = String(headerRow[c]);
+                if (!checkIfTotalRowOrCol(headerVal)) {
+                    lastRegularColIndex = c;
+                    break;
                 }
             }
 
@@ -586,9 +589,8 @@
                     if (monthSeparators[colIndex] && !isTotalCell) {
                         extraClass += ' month-separator';
                     }
-                    // Corrected Last Border Placement: apply border-left on the first total column
-                    if (isTotalCell && colIndex > 1 && !totalCols[colIndex - 1]) {
-                        extraClass += ' total-separator-col';
+                    if (colIndex === lastRegularColIndex && !isTotalCell && !isFrozen) {
+                        extraClass += ' end-border-col';
                     }
 
                     if (rowIndex === 0) {
@@ -602,7 +604,6 @@
                             </div>
                         </th>`;
                     } else if (rowIndex === 1) {
-                        // Row 2: Filter dropdowns mapped from second row values
                         let headerClass = isTotalCell ? 'total-header' : '';
                         let currentFilterVal = activeFilters[colIndex] || 'all';
 
