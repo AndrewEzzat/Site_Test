@@ -256,13 +256,10 @@
             color: #ffffff !important;
         }
 
-        /* Month and Total borders adjusted for 2-column paired layout */
-        .month-separator {
+        /* Precise Single-Sided Borders for Months and Totals */
+        .month-separator, .total-separator-col {
             border-right: var(--medium-border) !important;
-        }
-
-        .end-border-col {
-            border-left: var(--medium-border) !important;
+            border-left: none !important;
         }
 
         .total-separator-row td, .total-separator-row th {
@@ -537,16 +534,17 @@
             let totalRowsIndices = new Array(finalRowsToDisplay.length).fill(false);
 
             let prevMonth = '';
-            // Since every date is repeated in 2 columns, step by 2 from right to left to evaluate month starts accurately
-            for (let c = headerRow.length - 1; c >= 2; c -= 2) {
+            // Scan from right to left (col 2 onwards) taking into account 2-column paired dates
+            for (let c = 2; c < headerRow.length; c++) {
                 let headerVal = String(headerRow[c]);
                 if (checkIfTotalRowOrCol(headerVal)) {
                     totalCols[c] = true;
-                    totalCols[c - 1] = true;
                 } else {
                     let m = extractMonth(headerVal);
-                    if (m && m !== prevMonth) {
-                        monthSeparators[c] = true; // Mark the outer edge of the 2-column date block
+                    if (m) {
+                        if (prevMonth && m !== prevMonth) {
+                            monthSeparators[c] = true; 
+                        }
                         prevMonth = m;
                     }
                 }
@@ -559,11 +557,10 @@
                 }
             }
 
-            let lastRegularColIndex = -1;
-            for (let c = headerRow.length - 1; c >= 2; c--) {
-                let headerVal = String(headerRow[c]);
-                if (!checkIfTotalRowOrCol(headerVal)) {
-                    lastRegularColIndex = c;
+            let firstTotalColIndex = -1;
+            for (let c = 2; c < headerRow.length; c++) {
+                if (totalCols[c] || checkIfTotalRowOrCol(headerRow[c])) {
+                    firstTotalColIndex = c;
                     break;
                 }
             }
@@ -588,8 +585,8 @@
                     if (monthSeparators[colIndex] && !isTotalCell) {
                         extraClass += ' month-separator';
                     }
-                    if (colIndex === lastRegularColIndex && !isTotalCell && !isFrozen) {
-                        extraClass += ' end-border-col';
+                    if (colIndex === firstTotalColIndex && !isFrozen) {
+                        extraClass += ' total-separator-col';
                     }
 
                     if (rowIndex === 0) {
