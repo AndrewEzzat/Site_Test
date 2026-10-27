@@ -256,7 +256,7 @@
             color: #ffffff !important;
         }
 
-        /* Consistent Month and Total borders */
+        /* Month and Total borders adjusted for 2-column paired layout */
         .month-separator {
             border-right: var(--medium-border) !important;
         }
@@ -537,18 +537,17 @@
             let totalRowsIndices = new Array(finalRowsToDisplay.length).fill(false);
 
             let prevMonth = '';
-            // Scan from right to left (RTL order) and mark the first column where a new month starts
-            for (let c = headerRow.length - 1; c >= 2; c--) {
+            // Since every date is repeated in 2 columns, step by 2 from right to left to evaluate month starts accurately
+            for (let c = headerRow.length - 1; c >= 2; c -= 2) {
                 let headerVal = String(headerRow[c]);
                 if (checkIfTotalRowOrCol(headerVal)) {
                     totalCols[c] = true;
+                    totalCols[c - 1] = true;
                 } else {
                     let m = extractMonth(headerVal);
-                    if (m) {
-                        if (m !== prevMonth) {
-                            monthSeparators[c] = true; 
-                            prevMonth = m;
-                        }
+                    if (m && m !== prevMonth) {
+                        monthSeparators[c] = true; // Mark the outer edge of the 2-column date block
+                        prevMonth = m;
                     }
                 }
             }
