@@ -257,9 +257,12 @@
         }
 
         /* Precise Single-Sided Borders for Months and Totals */
-        .month-separator, .total-separator-col {
+        .month-separator {
             border-right: var(--medium-border) !important;
-            border-left: none !important;
+        }
+
+        .end-border-col {
+            border-left: var(--medium-border) !important;
         }
 
         .total-separator-row td, .total-separator-row th {
@@ -533,19 +536,45 @@
             let totalCols = new Array(headerRow.length).fill(false);
             let totalRowsIndices = new Array(finalRowsToDisplay.length).fill(false);
 
-            let prevMonth = '';
-            // Scan from right to left jumping 2 columns at a time (matching the 2-column paired date structure)
-            for (let c = headerRow.length - 1; c >= 2; c -= 2) {
+            // Identify total columns
+            for (let c = 2; c < headerRow.length; c++) {
                 let headerVal = String(headerRow[c]);
-                if (checkIfTotalRowOrCol(headerVal)) {
+                let filterVal = String(filterRow[c] || '');
+                if (checkIfTotalRowOrCol(headerVal) || checkIfTotalRowOrCol(filterVal)) {
                     totalCols[c] = true;
-                    totalCols[c - 1] = true;
+                }
+            }
+
+            // Find first total column index
+            let firstTotalColIndex = -1;
+            for (let c = 2; c < headerRow.length; c++) {
+                if (totalCols[c]) {
+                    firstTotalColIndex = c;
+                    break;
+                }
+            }
+
+            // The last date column is right before the first total column
+            let lastDateColIndex = firstTotalColIndex !== -1 ? firstTotalColIndex - 1 : headerRow.length - 1;
+
+            // Detect month boundaries based on header text block transitions
+            let prevMonth = '';
+            let currentBlockHeader = '';
+
+            for (let c = 2; c < headerRow.length; c++) {
+                if (totalCols[c]) continue;
+                let headerVal = String(headerRow[c]);
+                let m = extractMonth(headerVal);
+
+                if (c === 2) {
+                    currentBlockHeader = headerVal;
+                    prevMonth = m;
                 } else {
-                    let m = extractMonth(headerVal);
-                    if (m) {
-                        if (prevMonth && m !== prevMonth) {
-                            monthSeparators[c] = true; // Clean boundary at the start of the 2-column date block
+                    if (headerVal !== currentBlockHeader) {
+                        if (m && prevMonth && m !== prevMonth) {
+                            monthSeparators[c] = true;
                         }
+                        currentBlockHeader = headerVal;
                         prevMonth = m;
                     }
                 }
@@ -555,14 +584,6 @@
                 let rowLabel = String(finalRowsToDisplay[r][1] || finalRowsToDisplay[r][0]);
                 if (checkIfTotalRowOrCol(rowLabel)) {
                     totalRowsIndices[r] = true;
-                }
-            }
-
-            let firstTotalColIndex = -1;
-            for (let c = 2; c < headerRow.length; c++) {
-                if (totalCols[c] || checkIfTotalRowOrCol(headerRow[c])) {
-                    firstTotalColIndex = c;
-                    break;
                 }
             }
 
@@ -586,8 +607,8 @@
                     if (monthSeparators[colIndex] && !isTotalCell) {
                         extraClass += ' month-separator';
                     }
-                    if (colIndex === firstTotalColIndex && !isFrozen) {
-                        extraClass += ' total-separator-col';
+                    if (colIndex === lastDateColIndex && !isFrozen && !isTotalCell) {
+                        extraClass += ' end-border-col';
                     }
 
                     if (rowIndex === 0) {
