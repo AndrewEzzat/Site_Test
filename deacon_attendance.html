@@ -534,16 +534,17 @@
             let totalRowsIndices = new Array(finalRowsToDisplay.length).fill(false);
 
             let prevMonth = '';
-            // Scan from right to left (col 2 onwards) taking into account 2-column paired dates
-            for (let c = 2; c < headerRow.length; c++) {
+            // Scan from right to left jumping 2 columns at a time (matching the 2-column paired date structure)
+            for (let c = headerRow.length - 1; c >= 2; c -= 2) {
                 let headerVal = String(headerRow[c]);
                 if (checkIfTotalRowOrCol(headerVal)) {
                     totalCols[c] = true;
+                    totalCols[c - 1] = true;
                 } else {
                     let m = extractMonth(headerVal);
                     if (m) {
                         if (prevMonth && m !== prevMonth) {
-                            monthSeparators[c] = true; 
+                            monthSeparators[c] = true; // Clean boundary at the start of the 2-column date block
                         }
                         prevMonth = m;
                     }
