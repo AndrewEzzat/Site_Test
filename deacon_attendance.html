@@ -222,7 +222,7 @@
             color: #ffffff !important;
         }
 
-        /* Month and Total separators aligned correctly for RTL layout */
+        /* Corrected RTL border positioning for months and totals */
         .month-separator {
             border-right: var(--medium-border) !important;
         }
@@ -447,7 +447,7 @@
 
                     if (rows.length > 0) {
                         let prevMonth = '';
-                        // Scan correctly matching RTL column progression order
+                        // Corrected RTL loop: scanning from right to left index bounds
                         for (let c = rows[0].length - 1; c >= 2; c--) {
                             let headerVal = String(rows[0][c]);
                             if (checkIfTotalRowOrCol(headerVal)) {
