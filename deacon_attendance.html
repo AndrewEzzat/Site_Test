@@ -222,7 +222,7 @@
             color: #ffffff !important;
         }
 
-        /* Corrected RTL border positioning for months and totals */
+        /* Corrected RTL side: border-right for months and totals */
         .month-separator {
             border-right: var(--medium-border) !important;
         }
@@ -447,8 +447,8 @@
 
                     if (rows.length > 0) {
                         let prevMonth = '';
-                        // Corrected RTL loop: scanning from right to left index bounds
-                        for (let c = rows[0].length - 1; c >= 2; c--) {
+                        // In RTL, columns progress from right to left (index 2 onwards moves backwards in display flow)
+                        for (let c = 2; c < rows[0].length; c++) {
                             let headerVal = String(rows[0][c]);
                             if (checkIfTotalRowOrCol(headerVal)) {
                                 totalCols[c] = true;
@@ -458,11 +458,10 @@
                                     if (!firstMonthFound) {
                                         monthSeparators[c] = true; 
                                         firstMonthFound = true;
-                                        prevMonth = m;
-                                    } else if (m !== prevMonth) {
+                                    } else if (prevMonth && m !== prevMonth) {
                                         monthSeparators[c] = true; 
-                                        prevMonth = m;
                                     }
+                                    prevMonth = m;
                                 }
                             }
                         }
