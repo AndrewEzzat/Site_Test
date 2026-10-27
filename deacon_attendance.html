@@ -18,7 +18,8 @@
             --teal-mid: #6acad1;
             --teal-light: #8af0f8;
             --frozen-bg: #f0fdff;
-            --medium-border: 2px solid #334155; 
+            /* Thinner 1.5px border for months and totals */
+            --medium-border: 1.5px solid #334155; 
         }
 
         * {
@@ -221,13 +222,13 @@
             color: #ffffff !important;
         }
 
-        /* Medium thick borders */
+        /* Corrected RTL side: border-right for months and totals */
         .month-separator {
-            border-left: var(--medium-border) !important;
+            border-right: var(--medium-border) !important;
         }
 
         .total-separator-col {
-            border-left: var(--medium-border) !important;
+            border-right: var(--medium-border) !important;
         }
 
         .total-separator-row td, .total-separator-row th {
@@ -446,7 +447,8 @@
 
                     if (rows.length > 0) {
                         let prevMonth = '';
-                        for (let c = 0; c < rows[0].length; c++) {
+                        // In RTL, columns progress from right to left (index 2 onwards moves backwards in display flow)
+                        for (let c = 2; c < rows[0].length; c++) {
                             let headerVal = String(rows[0][c]);
                             if (checkIfTotalRowOrCol(headerVal)) {
                                 totalCols[c] = true;
@@ -454,10 +456,10 @@
                                 let m = extractMonth(headerVal);
                                 if (m) {
                                     if (!firstMonthFound) {
-                                        monthSeparators[c] = true; // Border before the first month found
+                                        monthSeparators[c] = true; 
                                         firstMonthFound = true;
                                     } else if (prevMonth && m !== prevMonth) {
-                                        monthSeparators[c] = true; // Border between different months
+                                        monthSeparators[c] = true; 
                                     }
                                     prevMonth = m;
                                 }
@@ -508,7 +510,6 @@
 
                                 let isAttendanceCell = (rawStr === 'حاضر' || rawStr === 'غائب' || rawStr === 'ح' || rawStr === 'غ' || rawStr === '-');
                                 
-                                // Editable check: Attendance cells or any empty/text cells in non-date columns (like name, phone, notes)
                                 let editable = '';
                                 if (!isTotalCell) {
                                     if (isDateCol && isAttendanceCell) {
