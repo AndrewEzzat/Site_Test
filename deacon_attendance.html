@@ -560,16 +560,16 @@
                         let headerClass = isTotalCell ? 'total-header' : '';
                         let currentFilterVal = activeFilters[colIndex] || 'all';
 
+                        // Gather unique values strictly from regular rows (excluding total rows)
                         let uniqueColVals = new Set();
-                        globalRows.slice(2).forEach(r => {
-                            let v = String(r[colIndex] || '').trim();
+                        regularRows.forEach(item => {
+                            let v = String(item.row[colIndex] || '').trim();
                             if (v && v !== '-') uniqueColVals.add(v);
                         });
 
                         html += `<th class="${headerClass} ${idClass}">
                             <div class="th-controls">`;
                         
-                        // Exclude colIndex < 2 (م and الاسم) from generating dropdown filters to prevent clipping in sticky columns
                         if (colIndex >= 2 && uniqueColVals.size > 0 && !isDateHeader(String(headerRow[colIndex])) && !checkIfTotalRowOrCol(String(headerRow[colIndex]))) {
                             html += `<select onchange="updateFilter(${colIndex}, this.value)">
                                 <option value="all">الكل</option>`;
