@@ -569,7 +569,8 @@
                         html += `<th class="${headerClass} ${idClass}">
                             <div class="th-controls">`;
                         
-                        if (uniqueColVals.size > 0 && !isDateHeader(String(headerRow[colIndex])) && !checkIfTotalRowOrCol(String(headerRow[colIndex]))) {
+                        // Exclude colIndex < 2 (م and الاسم) from generating dropdown filters to prevent clipping in sticky columns
+                        if (colIndex >= 2 && uniqueColVals.size > 0 && !isDateHeader(String(headerRow[colIndex])) && !checkIfTotalRowOrCol(String(headerRow[colIndex]))) {
                             html += `<select onchange="updateFilter(${colIndex}, this.value)">
                                 <option value="all">الكل</option>`;
                             uniqueColVals.forEach(val => {
