@@ -168,28 +168,35 @@
             background-color: #ffffff;
         }
 
-        th {
+        /* Freeze Header Row 1 (Dates) */
+        tr:nth-child(1) th {
             background: var(--teal-dark);
             color: #ffffff;
             font-weight: 700;
             position: sticky;
             top: 0;
             z-index: 30;
-            border-bottom: 2px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
 
-        /* Header controls layout */
-        .th-content {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            align-items: center;
+        /* Freeze Header Row 2 (Filters) */
+        tr:nth-child(2) th {
+            background: var(--teal-mid);
+            color: #ffffff;
+            font-weight: 600;
+            position: sticky;
+            top: 35px; /* Matches exact height of Row 1 */
+            z-index: 30;
+            border-bottom: 2px solid var(--border);
+            padding: 4px 6px;
         }
 
         .th-controls {
             display: flex;
             gap: 4px;
             font-size: 10px;
+            justify-content: center;
+            align-items: center;
         }
 
         .th-controls select, .th-controls button {
@@ -197,7 +204,7 @@
             border: 1px solid var(--border);
             border-radius: 4px;
             font-size: 10px;
-            padding: 1px 4px;
+            padding: 2px 4px;
             font-family: 'Cairo', sans-serif;
             color: var(--text-main);
             cursor: pointer;
@@ -211,30 +218,32 @@
             text-align: center !important;
         }
 
-        /* Freeze Column 1 (م) */
-        td:nth-child(1), th:nth-child(1) {
+        /* Freeze Column 1 (م) across both sticky header rows */
+        td:nth-child(1), tr:nth-child(1) th:nth-child(1), tr:nth-child(2) th:nth-child(1) {
             position: sticky;
             right: 0;
             z-index: 20;
             background-color: var(--frozen-bg);
         }
-        th:nth-child(1) {
-            z-index: 40;
-            background: var(--teal-dark);
+        tr:nth-child(1) th:nth-child(1), tr:nth-child(2) th:nth-child(1) {
+            z-index: 50;
         }
+        tr:nth-child(1) th:nth-child(1) { background: var(--teal-dark); }
+        tr:nth-child(2) th:nth-child(1) { background: var(--teal-mid); }
 
-        /* Freeze Column 2 (الاسم) */
-        td:nth-child(2), th:nth-child(2) {
+        /* Freeze Column 2 (الاسم) across both sticky header rows */
+        td:nth-child(2), tr:nth-child(1) th:nth-child(2), tr:nth-child(2) th:nth-child(2) {
             position: sticky;
             right: 38px;
             z-index: 20;
             background-color: var(--frozen-bg);
             text-align: right;
         }
-        th:nth-child(2) {
-            z-index: 40;
-            background: var(--teal-dark);
+        tr:nth-child(1) th:nth-child(2), tr:nth-child(2) th:nth-child(2) {
+            z-index: 50;
         }
+        tr:nth-child(1) th:nth-child(2) { background: var(--teal-dark); }
+        tr:nth-child(2) th:nth-child(2) { background: var(--teal-mid); }
 
         .total-cell {
             background-color: var(--teal-light) !important;
@@ -247,21 +256,17 @@
             color: #ffffff !important;
         }
 
-        /* Medium borders for months, totals, and correct ending boundary */
+        /* Correct RTL borders for months, totals, and proper end boundary */
         .month-separator {
             border-right: var(--medium-border) !important;
         }
 
         .total-separator-col {
-            border-right: var(--medium-border) !important;
+            border-left: var(--medium-border) !important;
         }
 
         .total-separator-row td, .total-separator-row th {
             border-top: var(--medium-border) !important;
-        }
-
-        .end-border-col {
-            border-right: var(--medium-border) !important;
         }
 
         tr:nth-child(even) td:not(:nth-child(1)):not(:nth-child(2)):not(.total-cell) { 
@@ -349,7 +354,7 @@
         let currentTabName = '';
         let sheetStartRowIndex = 1;
         let globalRows = [];
-        let activeFilters = {}; // colIndex -> filterValue
+        let activeFilters = {}; 
         let activeSort = { colIndex: null, direction: 'asc' };
 
         async function authenticate() {
@@ -488,19 +493,19 @@
             let rows = [...globalRows];
             if (rows.length === 0) return;
 
-            let headerRow = rows[0];
-            let dataRows = rows.slice(1);
+            let headerRow = rows[0];       // Row 1: Dates / Titles
+            let filterRow = rows[1];       // Row 2: Categories / Subheaders
+            let dataRows = rows.slice(2);  // Actual data rows starting from row 3
 
-            // Separate summary/total rows from regular data rows so sorting/filtering doesn't scramble totals at the bottom
             let regularRows = [];
             let totalRowsData = [];
             dataRows.forEach((r, idx) => {
                 let rowLabel = String(r[1] || r[0]);
                 let isTotalR = checkIfTotalRowOrCol(rowLabel);
                 if (isTotalR) {
-                    totalRowsData.push({ row: r, originalIndex: idx + 1 });
+                    totalRowsData.push({ row: r, originalIndex: idx + 2 });
                 } else {
-                    regularRows.push({ row: r, originalIndex: idx + 1 });
+                    regularRows.push({ row: r, originalIndex: idx + 2 });
                 }
             });
 
@@ -527,7 +532,7 @@
                 });
             }
 
-            let finalRowsToDisplay = [headerRow, ...filteredRows.map(item => item.row), ...totalRowsData.map(item => item.row)];
+            let finalRowsToDisplay = [headerRow, filterRow, ...filteredRows.map(item => item.row), ...totalRowsData.map(item => item.row)];
 
             let monthSeparators = new Array(headerRow.length).fill(false);
             let totalCols = new Array(headerRow.length).fill(false);
@@ -561,15 +566,6 @@
                 }
             }
 
-            // Correct last boundary column index (last column before totals begin)
-            let lastRegularColIndex = headerRow.length - 1;
-            for (let c = 0; c < headerRow.length; c++) {
-                if (totalCols[c] || checkIfTotalRowOrCol(headerRow[c])) {
-                    lastRegularColIndex = c - 1;
-                    break;
-                }
-            }
-
             let html = '<table>';
             
             finalRowsToDisplay.forEach((row, rowIndex) => {
@@ -590,33 +586,36 @@
                     if (monthSeparators[colIndex] && !isTotalCell) {
                         extraClass += ' month-separator';
                     }
+                    // Corrected Last Border Placement: apply border-left on the first total column
                     if (isTotalCell && colIndex > 1 && !totalCols[colIndex - 1]) {
                         extraClass += ' total-separator-col';
-                    }
-                    if (colIndex === lastRegularColIndex && !isTotalCell && !isFrozen) {
-                        extraClass += ' end-border-col';
                     }
 
                     if (rowIndex === 0) {
                         let headerClass = isTotalCell ? 'total-header' : '';
-                        
-                        // Build unique filter options for this column from original data rows
+                        let sortDirIcon = (activeSort.colIndex === colIndex) ? (activeSort.direction === 'asc' ? ' 🔼' : ' 🔽') : ' ↕';
+
+                        html += `<th class="${headerClass} ${idClass} ${extraClass}">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
+                                <span>${formatted}</span>
+                                <button onclick="toggleSort(${colIndex})" title="ترتيب" style="background:none; border:none; color:#fff; cursor:pointer; font-size:11px;">${sortDirIcon}</button>
+                            </div>
+                        </th>`;
+                    } else if (rowIndex === 1) {
+                        // Row 2: Filter dropdowns mapped from second row values
+                        let headerClass = isTotalCell ? 'total-header' : '';
+                        let currentFilterVal = activeFilters[colIndex] || 'all';
+
                         let uniqueColVals = new Set();
-                        globalRows.slice(1).forEach(r => {
+                        globalRows.slice(2).forEach(r => {
                             let v = String(r[colIndex] || '').trim();
                             if (v && v !== '-') uniqueColVals.add(v);
                         });
 
-                        let currentFilterVal = activeFilters[colIndex] || 'all';
-                        let sortDirIcon = (activeSort.colIndex === colIndex) ? (activeSort.direction === 'asc' ? ' 🔼' : ' 🔽') : ' ↕';
-
                         html += `<th class="${headerClass} ${idClass} ${extraClass}">
-                            <div class="th-content">
-                                <span>${formatted}</span>
-                                <div class="th-controls">
-                                    <button onclick="toggleSort(${colIndex})" title="ترتيب">${sortDirIcon}</button>`;
+                            <div class="th-controls">`;
                         
-                        if (uniqueColVals.size > 0 && !isDateHeader(formatted) && !checkIfTotalRowOrCol(formatted)) {
+                        if (uniqueColVals.size > 0 && !isDateHeader(String(headerRow[colIndex])) && !checkIfTotalRowOrCol(String(headerRow[colIndex]))) {
                             html += `<select onchange="updateFilter(${colIndex}, this.value)">
                                 <option value="all">الكل</option>`;
                             uniqueColVals.forEach(val => {
@@ -624,9 +623,11 @@
                                 html += `<option value="${val}" ${sel}>${val}</option>`;
                             });
                             html += `</select>`;
+                        } else {
+                            html += `<span>${formatted}</span>`;
                         }
 
-                        html += `</div></div></th>`;
+                        html += `</div></th>`;
                     } else {
                         let displayCell = formatted;
                         let rawStr = String(formatted).trim();
@@ -653,7 +654,6 @@
                             }
                         }
 
-                        // Map back to correct global sheet row index for persistence
                         let originalGlobalRowIndex = globalRows.findIndex(r => r === row);
                         const actualRowInSheet = sheetStartRowIndex + originalGlobalRowIndex;
                         const actualColInSheet = colIndex + 1;
