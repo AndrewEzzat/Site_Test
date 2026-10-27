@@ -140,37 +140,12 @@
             border-color: var(--primary);
         }
 
-        /* Filter bar styling */
-        .filter-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            background: #ffffff;
-            padding: 8px 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .filter-bar select {
-            padding: 4px 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-family: 'Cairo', sans-serif;
-            font-size: 12px;
-            outline: none;
-            background: #f8fafc;
-            color: var(--text-main);
-        }
-
         .table-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
             overflow: auto;
-            max-height: 75vh;
+            max-height: 80vh;
             -webkit-overflow-scrolling: touch;
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
             position: relative;
@@ -201,6 +176,32 @@
             top: 0;
             z-index: 30;
             border-bottom: 2px solid var(--border);
+        }
+
+        /* Header controls layout */
+        .th-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .th-controls {
+            display: flex;
+            gap: 4px;
+            font-size: 10px;
+        }
+
+        .th-controls select, .th-controls button {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 10px;
+            padding: 1px 4px;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
         }
 
         .col-id {
@@ -246,7 +247,7 @@
             color: #ffffff !important;
         }
 
-        /* Medium borders for months, totals, and ending boundary */
+        /* Medium borders for months, totals, and correct ending boundary */
         .month-separator {
             border-right: var(--medium-border) !important;
         }
@@ -260,7 +261,7 @@
         }
 
         .end-border-col {
-            border-left: var(--medium-border) !important;
+            border-right: var(--medium-border) !important;
         }
 
         tr:nth-child(even) td:not(:nth-child(1)):not(:nth-child(2)):not(.total-cell) { 
@@ -338,7 +339,6 @@
 
         <div id="attendanceSection" style="display: none;">
             <div class="tabs-nav" id="tabsNav"></div>
-            <div id="filterContainer"></div>
             <div class="table-card" id="tableContainer"></div>
         </div>
     </div>
@@ -349,7 +349,8 @@
         let currentTabName = '';
         let sheetStartRowIndex = 1;
         let globalRows = [];
-        let globalFrozenCols = 2;
+        let activeFilters = {}; // colIndex -> filterValue
+        let activeSort = { colIndex: null, direction: 'asc' };
 
         async function authenticate() {
             const inputPass = document.getElementById('passwordInput').value.trim();
@@ -457,7 +458,8 @@
             currentTabName = tabName;
             const container = document.getElementById('tableContainer');
             container.innerHTML = `<p class="loading-msg">جاري تحميل ${tabName}...</p>`;
-            document.getElementById('filterContainer').innerHTML = '';
+            activeFilters = {};
+            activeSort = { colIndex: null, direction: 'asc' };
 
             try {
                 const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getAttendance&tabName=${encodeURIComponent(tabName)}&password=${encodeURIComponent(userPassword)}`);
@@ -471,7 +473,7 @@
                         globalRows[0] = processMergedHeaders(globalRows[0]);
                     }
 
-                    renderTableAndFilters('all');
+                    renderTable();
 
                 } else {
                     container.innerHTML = `<p class="error-msg">لا توجد بيانات متاحة.</p>`;
@@ -481,84 +483,88 @@
             }
         }
 
-        function renderTableAndFilters(filterValue) {
+        function renderTable() {
             const container = document.getElementById('tableContainer');
-            const filterContainer = document.getElementById('filterContainer');
-            let rows = globalRows;
+            let rows = [...globalRows];
+            if (rows.length === 0) return;
 
-            // Determine filterable column index (second row, typically index 2 if col 0 is ID and col 1 is Name, or let's look for columns that are not dates/totals/names)
-            // The user requested filters for the second row (the row that follows the dates/headers, which is rows[1] if rows[0] is header).
-            // Let's extract unique values from rows[1] excluding index 0 and 1 (ID & Name) and totals/dates.
-            let filterColIndex = -1;
-            if (rows.length > 1) {
-                for (let c = 2; c < rows[1].length; c++) {
-                    let headerVal = String(rows[0][c]);
-                    if (!isDateHeader(headerVal) && !checkIfTotalRowOrCol(headerVal)) {
-                        filterColIndex = c;
-                        break;
+            let headerRow = rows[0];
+            let dataRows = rows.slice(1);
+
+            // Separate summary/total rows from regular data rows so sorting/filtering doesn't scramble totals at the bottom
+            let regularRows = [];
+            let totalRowsData = [];
+            dataRows.forEach((r, idx) => {
+                let rowLabel = String(r[1] || r[0]);
+                let isTotalR = checkIfTotalRowOrCol(rowLabel);
+                if (isTotalR) {
+                    totalRowsData.push({ row: r, originalIndex: idx + 1 });
+                } else {
+                    regularRows.push({ row: r, originalIndex: idx + 1 });
+                }
+            });
+
+            // Apply filters on regular rows
+            let filteredRows = regularRows.filter(item => {
+                for (let colIdx in activeFilters) {
+                    let filterVal = activeFilters[colIdx];
+                    if (filterVal && filterVal !== 'all') {
+                        let cellVal = String(item.row[colIdx] || '').trim();
+                        if (cellVal !== filterVal) return false;
                     }
                 }
-            }
+                return true;
+            });
 
-            // Build filter dropdown HTML if filterable column exists
-            if (filterColIndex !== -1) {
-                let uniqueValues = new Set();
-                for (let r = 1; r < rows.length; r++) {
-                    let val = String(rows[r][filterColIndex] || '').trim();
-                    if (val && val !== '-') uniqueValues.add(val);
-                }
-
-                let filterHeaderName = String(rows[0][filterColIndex] || 'تصنيف');
-                let filterHtml = `<div class="filter-bar">
-                    <span>تصفية حسب (${filterHeaderName}):</span>
-                    <select id="dataFilter" onchange="applyFilter(this.value)">
-                        <option value="all">الكل</option>`;
-                uniqueValues.forEach(val => {
-                    let selected = filterValue === val ? 'selected' : '';
-                    filterHtml += `<option value="${val}" ${selected}>${val}</option>`;
+            // Apply sorting on regular rows
+            if (activeSort.colIndex !== null) {
+                let cIdx = activeSort.colIndex;
+                let dir = activeSort.direction === 'asc' ? 1 : -1;
+                filteredRows.sort((a, b) => {
+                    let valA = String(a.row[cIdx] || '').trim();
+                    let valB = String(b.row[cIdx] || '').trim();
+                    return valA.localeCompare(valB, 'ar', { numeric: true }) * dir;
                 });
-                filterHtml += `</select></div>`;
-                filterContainer.innerHTML = filterHtml;
             }
 
-            let monthSeparators = new Array(rows[0].length).fill(false);
-            let totalCols = new Array(rows[0].length).fill(false);
-            let totalRows = new Array(rows.length).fill(false);
+            let finalRowsToDisplay = [headerRow, ...filteredRows.map(item => item.row), ...totalRowsData.map(item => item.row)];
+
+            let monthSeparators = new Array(headerRow.length).fill(false);
+            let totalCols = new Array(headerRow.length).fill(false);
+            let totalRowsIndices = new Array(finalRowsToDisplay.length).fill(false);
             let firstMonthFound = false;
 
-            if (rows.length > 0) {
-                let prevMonth = '';
-                for (let c = rows[0].length - 1; c >= 2; c--) {
-                    let headerVal = String(rows[0][c]);
-                    if (checkIfTotalRowOrCol(headerVal)) {
-                        totalCols[c] = true;
-                    } else {
-                        let m = extractMonth(headerVal);
-                        if (m) {
-                            if (!firstMonthFound) {
-                                monthSeparators[c] = true; 
-                                firstMonthFound = true;
-                                prevMonth = m;
-                            } else if (m !== prevMonth) {
-                                monthSeparators[c] = true; 
-                                prevMonth = m;
-                            }
+            let prevMonth = '';
+            for (let c = headerRow.length - 1; c >= 2; c--) {
+                let headerVal = String(headerRow[c]);
+                if (checkIfTotalRowOrCol(headerVal)) {
+                    totalCols[c] = true;
+                } else {
+                    let m = extractMonth(headerVal);
+                    if (m) {
+                        if (!firstMonthFound) {
+                            monthSeparators[c] = true; 
+                            firstMonthFound = true;
+                            prevMonth = m;
+                        } else if (m !== prevMonth) {
+                            monthSeparators[c] = true; 
+                            prevMonth = m;
                         }
                     }
                 }
             }
 
-            for (let r = 0; r < rows.length; r++) {
-                let rowLabel = String(rows[r][1] || rows[r][0]);
+            for (let r = 0; r < finalRowsToDisplay.length; r++) {
+                let rowLabel = String(finalRowsToDisplay[r][1] || finalRowsToDisplay[r][0]);
                 if (checkIfTotalRowOrCol(rowLabel)) {
-                    totalRows[r] = true;
+                    totalRowsIndices[r] = true;
                 }
             }
 
-            // Find last column index before totals to apply end border
-            let lastRegularColIndex = rows[0].length - 1;
-            for (let c = 0; c < rows[0].length; c++) {
-                if (totalCols[c] || checkIfTotalRowOrCol(rows[0][c])) {
+            // Correct last boundary column index (last column before totals begin)
+            let lastRegularColIndex = headerRow.length - 1;
+            for (let c = 0; c < headerRow.length; c++) {
+                if (totalCols[c] || checkIfTotalRowOrCol(headerRow[c])) {
                     lastRegularColIndex = c - 1;
                     break;
                 }
@@ -566,14 +572,8 @@
 
             let html = '<table>';
             
-            rows.forEach((row, rowIndex) => {
-                // Apply filter on rows (skip header row index 0)
-                if (rowIndex > 0 && filterColIndex !== -1 && filterValue !== 'all') {
-                    let cellVal = String(row[filterColIndex] || '').trim();
-                    if (cellVal !== filterValue) return; // skip row
-                }
-
-                let isRowTotal = totalRows[rowIndex];
+            finalRowsToDisplay.forEach((row, rowIndex) => {
+                let isRowTotal = totalRowsIndices[rowIndex];
                 let rowClass = isRowTotal ? 'total-separator-row' : '';
                 html += `<tr class="${rowClass}">`;
 
@@ -593,19 +593,45 @@
                     if (isTotalCell && colIndex > 1 && !totalCols[colIndex - 1]) {
                         extraClass += ' total-separator-col';
                     }
-                    // Add border at the end of regular columns before totals
                     if (colIndex === lastRegularColIndex && !isTotalCell && !isFrozen) {
                         extraClass += ' end-border-col';
                     }
 
                     if (rowIndex === 0) {
                         let headerClass = isTotalCell ? 'total-header' : '';
-                        html += `<th class="${headerClass} ${idClass} ${extraClass}">${formatted}</th>`;
+                        
+                        // Build unique filter options for this column from original data rows
+                        let uniqueColVals = new Set();
+                        globalRows.slice(1).forEach(r => {
+                            let v = String(r[colIndex] || '').trim();
+                            if (v && v !== '-') uniqueColVals.add(v);
+                        });
+
+                        let currentFilterVal = activeFilters[colIndex] || 'all';
+                        let sortDirIcon = (activeSort.colIndex === colIndex) ? (activeSort.direction === 'asc' ? ' 🔼' : ' 🔽') : ' ↕';
+
+                        html += `<th class="${headerClass} ${idClass} ${extraClass}">
+                            <div class="th-content">
+                                <span>${formatted}</span>
+                                <div class="th-controls">
+                                    <button onclick="toggleSort(${colIndex})" title="ترتيب">${sortDirIcon}</button>`;
+                        
+                        if (uniqueColVals.size > 0 && !isDateHeader(formatted) && !checkIfTotalRowOrCol(formatted)) {
+                            html += `<select onchange="updateFilter(${colIndex}, this.value)">
+                                <option value="all">الكل</option>`;
+                            uniqueColVals.forEach(val => {
+                                let sel = currentFilterVal === val ? 'selected' : '';
+                                html += `<option value="${val}" ${sel}>${val}</option>`;
+                            });
+                            html += `</select>`;
+                        }
+
+                        html += `</div></div></th>`;
                     } else {
                         let displayCell = formatted;
                         let rawStr = String(formatted).trim();
                         
-                        let headerColText = String(rows[0][colIndex] || '');
+                        let headerColText = String(headerRow[colIndex] || '');
                         let isDateCol = isDateHeader(headerColText);
 
                         let isAttendanceCell = (rawStr === 'حاضر' || rawStr === 'غائب' || rawStr === 'ح' || rawStr === 'غ' || rawStr === '-');
@@ -627,7 +653,9 @@
                             }
                         }
 
-                        const actualRowInSheet = sheetStartRowIndex + rowIndex;
+                        // Map back to correct global sheet row index for persistence
+                        let originalGlobalRowIndex = globalRows.findIndex(r => r === row);
+                        const actualRowInSheet = sheetStartRowIndex + originalGlobalRowIndex;
                         const actualColInSheet = colIndex + 1;
                         
                         let cellStyleClass = isTotalCell ? 'total-cell' : '';
@@ -646,8 +674,23 @@
             container.innerHTML = html;
         }
 
-        function applyFilter(val) {
-            renderTableAndFilters(val);
+        function updateFilter(colIndex, val) {
+            if (val === 'all') {
+                delete activeFilters[colIndex];
+            } else {
+                activeFilters[colIndex] = val;
+            }
+            renderTable();
+        }
+
+        function toggleSort(colIndex) {
+            if (activeSort.colIndex === colIndex) {
+                activeSort.direction = activeSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                activeSort.colIndex = colIndex;
+                activeSort.direction = 'asc';
+            }
+            renderTable();
         }
 
         function handleCellClick(cellElement, tabName) {
