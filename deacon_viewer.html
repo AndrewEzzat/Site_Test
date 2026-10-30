@@ -220,10 +220,10 @@
             color: var(--text-main);
         }
 
-        /* Ultra-compact iframe wrapper to crop Google Drive player into a small bar */
+        /* Scaled and fitted iframe container */
         .audio-frame-wrapper {
             width: 100%;
-            height: 60px;
+            height: 48px;
             overflow: hidden;
             border-radius: 6px;
             position: relative;
@@ -232,11 +232,13 @@
         }
 
         .audio-frame-wrapper iframe {
-            width: 100%;
-            height: 180px;
+            width: 133.33%;
+            height: 64px;
             position: absolute;
-            top: -55px;
+            top: -8px;
             left: 0;
+            transform: scale(0.75);
+            transform-origin: top left;
             border: none;
         }
 
