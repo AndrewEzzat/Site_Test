@@ -15,6 +15,19 @@
             --text-muted: #64748b;
             --border: #e2e8f0;
             --bg-color: #f8fafc;
+            --header-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #1e3a8a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --bg-color: #0f172a;
+            --header-bg: #1e293b;
         }
 
         * {
@@ -22,6 +35,7 @@
             font-family: 'Cairo', sans-serif;
             margin: 0;
             padding: 0;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
         }
 
         body {
@@ -35,7 +49,7 @@
 
         /* Compact Mobile Navigation Bar */
         nav {
-            background: #ffffff;
+            background: var(--header-bg);
             border-bottom: 1px solid var(--border);
             padding: 12px 16px;
             display: flex;
@@ -51,6 +65,12 @@
             white-space: nowrap;
         }
 
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .nav-links {
             display: flex;
             gap: 12px;
@@ -61,11 +81,23 @@
             color: var(--text-muted);
             font-weight: 600;
             font-size: 13px;
-            transition: color 0.2s;
         }
 
         .nav-links a:hover, .nav-links a.active {
             color: var(--primary);
+        }
+
+        .theme-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 5px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* Main Container */
@@ -116,7 +148,6 @@
             padding: 20px 16px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.2s ease;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
             display: flex;
             flex-direction: column;
@@ -173,9 +204,16 @@
             color: var(--text-muted);
             font-size: 11px;
             border-top: 1px solid var(--border);
-            background: #ffffff;
+            background: var(--header-bg);
         }
     </style>
+    <script>
+        // Apply saved theme immediately before render to avoid flickering
+        (function() {
+            const savedTheme = localStorage.getItem('deacon_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </head>
 <body>
 
@@ -184,9 +222,12 @@
         <div class="logo-area">
             <h1>📚 لوحة الخدمات</h1>
         </div>
-        <div class="nav-links">
-            <a href="index.html" class="active">الرئيسية</a>
-            <a href="#about" onclick="alert('قريباً: صفحة من نحن')">عن الموقع</a>
+        <div class="nav-right">
+            <div class="nav-links">
+                <a href="index.html" class="active">الرئيسية</a>
+                <a href="#about" onclick="alert('قريباً: صفحة من نحن')">عن الموقع</a>
+            </div>
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="تغيير المظهر">🌙</button>
         </div>
     </nav>
 
@@ -221,5 +262,26 @@
         جميع الحقوق محفوظة &copy; 2026
     </footer>
 
+    <script>
+        function updateThemeIcon() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) {
+                btn.innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('deacon_theme', newTheme);
+            updateThemeIcon();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+        });
+    </script>
 </body>
 </html>
