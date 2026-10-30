@@ -241,41 +241,36 @@
             color: var(--primary);
         }
 
-        .audio-controls-row {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
         .audio-player-container select {
-            flex: 1;
-            padding: 5px 8px;
-            font-size: 11px;
-            font-family: 'Cairo', sans-serif;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            outline: none;
-            background: var(--card-bg);
-            color: var(--text-main);
-        }
-
-        .speed-selector {
-            padding: 5px 8px;
-            font-size: 11px;
-            font-family: 'Cairo', sans-serif;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            outline: none;
-            background: var(--card-bg);
-            color: var(--text-main);
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .audio-player-container audio {
             width: 100%;
-            height: 38px;
+            padding: 5px 8px;
+            font-size: 11px;
+            font-family: 'Cairo', sans-serif;
+            border: 1px solid var(--border);
+            border-radius: 6px;
             outline: none;
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+
+        /* Cropped Google Drive Iframe Wrapper (70px height as adjusted) */
+        .audio-frame-wrapper {
+            width: 100%;
+            height: 70px;
+            overflow: hidden;
+            border-radius: 6px;
+            position: relative;
+            background: #1e1e1e;
+            display: none;
+        }
+
+        .audio-frame-wrapper iframe {
+            width: 100%;
+            height: 180px;
+            position: absolute;
+            top: -24px;
+            left: 0;
+            border: none;
         }
 
         .download-btn {
@@ -325,7 +320,6 @@
         }
     </style>
     <script>
-        // Apply saved theme immediately before render to avoid flickering
         (function() {
             const savedTheme = localStorage.getItem('deacon_theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -368,24 +362,17 @@
                 </div>
             </div>
 
-            <!-- Audio Player Bar with Speed Control (Works for both standalone audio and PDF background audio) -->
+            <!-- Cropped Google Drive Audio Player Bar -->
             <div class="audio-player-container" id="audioSection" style="display: none;">
                 <div class="audio-player-header">
-                    <span id="audioLabel">🎵 التسجيل الصوتي:</span>
+                    <span>🎵 اختر تسجيلاً صوتياً للاستماع أثناء القراءة:</span>
                 </div>
-                <div class="audio-controls-row">
-                    <select id="audioSelector" onchange="changeAudioSource(this.value)">
-                        <option value="">اختر التسجيل الصوتي...</option>
-                    </select>
-                    <select id="playbackSpeed" class="speed-selector" onchange="changePlaybackSpeed(this.value)" title="سرعة التشغيل">
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1.0x (عادي)</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="2">2.0x</option>
-                    </select>
+                <select id="audioSelector" onchange="changeAudioSource(this.value)">
+                    <option value="">اختر التسجيل الصوتي...</option>
+                </select>
+                <div class="audio-frame-wrapper" id="audioFrameWrapper">
+                    <iframe id="audioIframe" src="" allow="autoplay"></iframe>
                 </div>
-                <audio id="audioElement" controls style="display: none;"></audio>
             </div>
 
             <iframe id="contentViewer" src=""></iframe>
@@ -525,44 +512,25 @@
 
             const contentViewer = document.getElementById('contentViewer');
             const audioSection = document.getElementById('audioSection');
-            const audioElement = document.getElementById('audioElement');
-            const audioSelector = document.getElementById('audioSelector');
-            const audioLabel = document.getElementById('audioLabel');
+            const audioIframe = document.getElementById('audioIframe');
+            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
 
-            // Reset audio element
-            audioElement.pause();
-            audioElement.src = '';
-            audioElement.style.display = 'none';
+            audioIframe.src = '';
+            audioFrameWrapper.style.display = 'none';
 
             if (isAudio) {
-                // Standalone Audio Play Mode: Hide PDF viewer, show only audio player
-                contentViewer.style.display = 'none';
-                contentViewer.src = '';
-
-                audioSection.style.display = 'flex';
-                audioSelector.style.display = 'none'; // Hide dropdown since single file is selected
-                audioLabel.innerText = `🎵 تشغيل التسجيل: ${fileName}`;
-
-                // Set direct stream source to enable playback speed control
-                audioElement.src = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                audioElement.style.display = 'block';
-                audioElement.load();
-                audioElement.play().catch(e => console.log("Playback prevented:", e));
+                audioSection.style.display = 'none';
+                contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
             } else {
-                // PDF Document View Mode: Show PDF viewer and audio bar with dropdown
-                contentViewer.style.display = 'block';
                 contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
 
                 if (currentFolderAudioFiles.length > 0) {
                     audioSection.style.display = 'flex';
-                    audioSelector.style.display = 'block';
-                    audioLabel.innerText = '🎵 اختر تسجيلاً صوتياً للاستماع أثناء القراءة:';
-
-                    let optionsHtml = '<option value="">اختر التسجيل الصوتي...</option>';
+                    let optionsHtml = '<option value="">🎵 اختر تسجيلاً صوتياً للاستماع أثناء القراءة:</option>';
                     currentFolderAudioFiles.forEach(audioFile => {
                         optionsHtml += `<option value="${audioFile.id}">${audioFile.name}</option>`;
                     });
-                    audioSelector.innerHTML = optionsHtml;
+                    document.getElementById('audioSelector').innerHTML = optionsHtml;
                 } else {
                     audioSection.style.display = 'none';
                 }
@@ -574,24 +542,15 @@
         }
 
         function changeAudioSource(audioId) {
-            const audioElement = document.getElementById('audioElement');
-            const speedSelect = document.getElementById('playbackSpeed');
+            const audioIframe = document.getElementById('audioIframe');
+            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
             if (audioId) {
-                audioElement.src = `https://drive.google.com/uc?export=download&id=${audioId}`;
-                audioElement.style.display = 'block';
-                audioElement.load();
-                audioElement.playbackRate = parseFloat(speedSelect.value);
-                audioElement.play().catch(e => console.log("Playback prevented:", e));
+                audioIframe.src = `https://drive.google.com/file/d/${audioId}/preview`;
+                audioFrameWrapper.style.display = 'block';
             } else {
-                audioElement.pause();
-                audioElement.style.display = 'none';
-                audioElement.src = '';
+                audioIframe.src = '';
+                audioFrameWrapper.style.display = 'none';
             }
-        }
-
-        function changePlaybackSpeed(speed) {
-            const audioElement = document.getElementById('audioElement');
-            audioElement.playbackRate = parseFloat(speed);
         }
 
         function closeViewer() {
@@ -601,10 +560,10 @@
             const contentViewer = document.getElementById('contentViewer');
             contentViewer.src = '';
 
-            const audioElement = document.getElementById('audioElement');
-            audioElement.pause();
-            audioElement.src = '';
-            audioElement.style.display = 'none';
+            const audioIframe = document.getElementById('audioIframe');
+            audioIframe.src = '';
+            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
+            audioFrameWrapper.style.display = 'none';
         }
 
         window.onload = function() {
