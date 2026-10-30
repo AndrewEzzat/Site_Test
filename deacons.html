@@ -44,7 +44,7 @@
             flex-direction: column;
         }
 
-        /* Compact Mobile Header */
+        /* Compact Header */
         .header {
             background: var(--header-bg);
             border-bottom: 1px solid var(--border);
@@ -110,7 +110,7 @@
             text-align: center;
         }
 
-        /* Mobile-Friendly Grid Layout */
+        /* Mobile-Friendly 2x2 Grid */
         .grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -161,7 +161,6 @@
         }
     </style>
     <script>
-        // Apply saved theme immediately before render to avoid flickering
         (function() {
             const savedTheme = localStorage.getItem('deacon_theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
@@ -192,6 +191,12 @@
                 <h3>🎵 مناهج الألحان</h3>
             </a>
 
+            <!-- Class Finder (New 4th Section) -->
+            <a href="deacon_find_class.html" class="card">
+                <h3>🔍 معرفة الفصل</h3>
+                <p>البحث عن اسم الشماس للتعرف على الفصل الخاص به في الألحان والقبطي</p>
+            </a>
+
             <!-- Attendance Dashboard Card -->
             <a href="deacon_attendance.html" class="card">
                 <h3>📊 سجل الحضور والغياب</h3>
@@ -200,7 +205,6 @@
         </div>
     </div>
 
-    <!-- Load the Deacons Shared Config -->
     <script src="deacons-config.js"></script>
     <script>
         function updateThemeIcon() {
