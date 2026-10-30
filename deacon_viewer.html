@@ -220,10 +220,24 @@
             color: var(--text-main);
         }
 
-        .audio-player-container audio {
+        /* Ultra-compact iframe wrapper to crop Google Drive player into a small bar */
+        .audio-frame-wrapper {
             width: 100%;
-            height: 32px;
-            outline: none;
+            height: 60px;
+            overflow: hidden;
+            border-radius: 6px;
+            position: relative;
+            background: #1e1e1e;
+            display: none;
+        }
+
+        .audio-frame-wrapper iframe {
+            width: 100%;
+            height: 180px;
+            position: absolute;
+            top: -55px;
+            left: 0;
+            border: none;
         }
 
         .download-btn {
@@ -250,7 +264,7 @@
             font-size: 11px;
         }
 
-        iframe { 
+        #contentViewer { 
             width: 100%; 
             flex: 1; 
             min-height: 60vh;
@@ -314,7 +328,9 @@
                 <select id="audioSelector" onchange="changeAudioSource(this.value)">
                     <option value="">اختر التسجيل الصوتي...</option>
                 </select>
-                <audio id="audioElement" controls style="display: none;"></audio>
+                <div class="audio-frame-wrapper" id="audioFrameWrapper">
+                    <iframe id="audioIframe" src=""></iframe>
+                </div>
             </div>
 
             <iframe id="contentViewer" src=""></iframe>
@@ -438,12 +454,12 @@
 
             const contentViewer = document.getElementById('contentViewer');
             const audioSection = document.getElementById('audioSection');
-            const audioElement = document.getElementById('audioElement');
+            const audioIframe = document.getElementById('audioIframe');
+            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
 
             // Reset audio player state
-            audioElement.pause();
-            audioElement.src = '';
-            audioElement.style.display = 'none';
+            audioIframe.src = '';
+            audioFrameWrapper.style.display = 'none';
 
             if (isAudio) {
                 // Standalone Audio Play Mode: Use full Google Drive preview iframe for single audio selection
@@ -472,16 +488,14 @@
         }
 
         function changeAudioSource(audioId) {
-            const audioElement = document.getElementById('audioElement');
+            const audioIframe = document.getElementById('audioIframe');
+            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
             if (audioId) {
-                // Direct stream endpoint to make native browser audio player instantly active and playable
-                audioElement.src = `https://lh3.googleusercontent.com/d/${audioId}`;
-                audioElement.style.display = 'block';
-                audioElement.play().catch(e => console.log("Playback prevented:", e));
+                audioIframe.src = `https://drive.google.com/file/d/${audioId}/preview`;
+                audioFrameWrapper.style.display = 'block';
             } else {
-                audioElement.pause();
-                audioElement.style.display = 'none';
-                audioElement.src = '';
+                audioIframe.src = '';
+                audioFrameWrapper.style.display = 'none';
             }
         }
 
@@ -492,10 +506,10 @@
             const contentViewer = document.getElementById('contentViewer');
             contentViewer.src = '';
 
-            const audioElement = document.getElementById('audioElement');
-            audioElement.pause();
-            audioElement.src = '';
-            audioElement.style.display = 'none';
+            const audioIframe = document.getElementById('audioIframe');
+            audioIframe.src = '';
+            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
+            audioFrameWrapper.style.display = 'none';
         }
 
         window.onload = function() {
