@@ -31,7 +31,7 @@
             flex-direction: column;
         }
 
-        /* Compact Mobile Header */
+        /* Header */
         .header {
             background: #ffffff;
             border-bottom: 1px solid var(--border);
@@ -107,7 +107,7 @@
             text-decoration: underline;
         }
 
-        /* Mobile-Friendly Grid (2 columns on small screens) */
+        /* Grid Layout */
         .grid-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -158,7 +158,7 @@
             word-break: break-word;
         }
 
-        /* PDF Viewer Card */
+        /* Viewer Card */
         .viewer-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
@@ -166,7 +166,7 @@
             overflow: hidden;
             display: none;
             flex-direction: column;
-            height: 75vh;
+            min-height: 75vh;
             box-shadow: 0 4px 6px rgba(0,0,0,0.04);
             margin-top: 16px;
         }
@@ -187,6 +187,43 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+        /* Audio Selector Bar inside Viewer */
+        .audio-player-container {
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .audio-player-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .audio-player-container select {
+            width: 100%;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: 'Cairo', sans-serif;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            outline: none;
+            background: #ffffff;
+            color: var(--text-main);
+        }
+
+        .audio-player-container audio {
+            width: 100%;
+            height: 36px;
+            outline: none;
         }
 
         .download-btn {
@@ -216,6 +253,7 @@
         iframe { 
             width: 100%; 
             flex: 1; 
+            min-height: 55vh;
             border: none; 
         }
 
@@ -239,7 +277,7 @@
     <div class="header">
         <a href="deacons.html" class="back-btn">⬅ عودة</a>
         <h2 id="pageTitle">مدرسة الشمامسة</h2>
-        <div style="width: 50px;"></div> <!-- Spacer for balance -->
+        <div style="width: 50px;"></div>
     </div>
 
     <div class="container">
@@ -253,7 +291,7 @@
         </div>
 
         <div id="filesSection" style="display:none;">
-            <div class="section-heading">📄 الملفات الدراسية</div>
+            <div class="section-heading">📄 الملفات والتسجيلات</div>
             <div class="grid-container" id="filesGrid"></div>
         </div>
 
@@ -267,7 +305,19 @@
                     <button class="close-btn" onclick="closeViewer()">✕ إغلاق</button>
                 </div>
             </div>
-            <iframe id="pdfViewer" src=""></iframe>
+
+            <!-- Audio Player Bar inside Viewer -->
+            <div class="audio-player-container" id="audioSection" style="display: none;">
+                <div class="audio-player-header">
+                    <span>🎵 التسجيلات الصوتية المتاحة:</span>
+                </div>
+                <select id="audioSelector" onchange="changeAudioSource(this.value)">
+                    <option value="">اختر الملف الصوتي...</option>
+                </select>
+                <audio id="audioElement" controls style="display: none;"></audio>
+            </div>
+
+            <iframe id="pdfViewer" src="" style="display: none;"></iframe>
         </div>
     </div>
 
@@ -281,9 +331,15 @@
         document.getElementById('pageTitle').innerText = sectionType === 'hymns' ? 'مناهج الألحان' : 'مناهج القبطي';
 
         let historyStack = [{ id: ROOT_FOLDER_ID, name: 'الرئيسية' }];
+        let currentFolderAudioFiles = [];
+
+        function isAudioFile(fileName) {
+            const name = fileName.toLowerCase();
+            return name.endsWith('.mp3') || name.endsWith('.m4a') || name.endsWith('.wav') || name.endsWith('.ogg');
+        }
 
         async function loadFolder(folderId, folderName) {
-            document.getElementById('viewerCard').style.display = 'none';
+            closeViewer();
             const loadingMsg = document.getElementById('loadingMsg');
             loadingMsg.style.display = 'block';
             loadingMsg.innerText = `جاري تحميل ${folderName}...`;
@@ -314,11 +370,19 @@
                     }
 
                     const filesGrid = document.getElementById('filesGrid');
+                    currentFolderAudioFiles = [];
+
                     if (data.files.length > 0) {
                         let fiHtml = '';
                         data.files.forEach(file => {
-                            fiHtml += `<div class="card-item" onclick="openFile('${file.id}', '${file.name.replace(/'/g, "\\'")}')">
-                                         <span class="card-icon">📄</span>
+                            const isAudio = isAudioFile(file.name);
+                            if (isAudio) {
+                                currentFolderAudioFiles.push(file);
+                            }
+                            const icon = isAudio ? '🎵' : '📄';
+
+                            fiHtml += `<div class="card-item" onclick="openFile('${file.id}', '${file.name.replace(/'/g, "\\'")}', ${isAudio})">
+                                         <span class="card-icon">${icon}</span>
                                          <span class="card-title">${file.name}</span>
                                        </div>`;
                         });
@@ -366,21 +430,78 @@
             breadcrumbBar.innerHTML = html;
         }
 
-        function openFile(fileId, fileName) {
+        function openFile(fileId, fileName, isAudio = false) {
             document.getElementById('fileTitle').innerText = fileName;
-            document.getElementById('pdfViewer').src = `https://drive.google.com/file/d/${fileId}/preview`;
             
             const downloadBtn = document.getElementById('downloadLink');
             downloadBtn.href = `https://drive.google.com/uc?export=download&id=${fileId}`;
-            
+
+            const pdfViewer = document.getElementById('pdfViewer');
+            const audioSection = document.getElementById('audioSection');
+            const audioSelector = document.getElementById('audioSelector');
+            const audioElement = document.getElementById('audioElement');
+
+            if (isAudio) {
+                // Play single audio file mode
+                pdfViewer.style.display = 'none';
+                pdfViewer.src = '';
+
+                audioSection.style.display = 'flex';
+                audioSelector.style.display = 'none'; // Hide selector for single file
+                
+                audioElement.style.display = 'block';
+                audioElement.src = `https://docs.google.com/uc?export=open&id=${fileId}`;
+                audioElement.play().catch(() => {});
+            } else {
+                // PDF Document View Mode
+                pdfViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
+                pdfViewer.style.display = 'block';
+
+                // Check if current folder has MP3/Audio files to present player alongside PDF
+                if (currentFolderAudioFiles.length > 0) {
+                    audioSection.style.display = 'flex';
+                    audioSelector.style.display = 'block';
+
+                    let optionsHtml = '<option value="">🎵 اختر التسجيل الصوتي للاستماع...</option>';
+                    currentFolderAudioFiles.forEach(audioFile => {
+                        optionsHtml += `<option value="${audioFile.id}">${audioFile.name}</option>`;
+                    });
+                    audioSelector.innerHTML = optionsHtml;
+                    audioElement.style.display = 'none';
+                    audioElement.src = '';
+                } else {
+                    audioSection.style.display = 'none';
+                }
+            }
+
             const viewerCard = document.getElementById('viewerCard');
             viewerCard.style.display = 'flex';
             viewerCard.scrollIntoView({ behavior: 'smooth' });
         }
 
+        function changeAudioSource(audioId) {
+            const audioElement = document.getElementById('audioElement');
+            if (audioId) {
+                audioElement.src = `https://docs.google.com/uc?export=open&id=${audioId}`;
+                audioElement.style.display = 'block';
+                audioElement.play().catch(() => {});
+            } else {
+                audioElement.pause();
+                audioElement.style.display = 'none';
+                audioElement.src = '';
+            }
+        }
+
         function closeViewer() {
-            document.getElementById('viewerCard').style.display = 'none';
-            document.getElementById('pdfViewer').src = '';
+            const viewerCard = document.getElementById('viewerCard');
+            viewerCard.style.display = 'none';
+
+            const pdfViewer = document.getElementById('pdfViewer');
+            pdfViewer.src = '';
+
+            const audioElement = document.getElementById('audioElement');
+            audioElement.pause();
+            audioElement.src = '';
         }
 
         window.onload = function() {
