@@ -220,26 +220,11 @@
             color: var(--text-main);
         }
 
-        /* Scaled and fitted iframe container */
-        .audio-frame-wrapper {
+        .audio-player-container audio {
             width: 100%;
-            height: 48px;
-            overflow: hidden;
-            border-radius: 6px;
-            position: relative;
-            background: #1e1e1e;
+            height: 36px;
+            outline: none;
             display: none;
-        }
-
-        .audio-frame-wrapper iframe {
-            width: 133.33%;
-            height: 64px;
-            position: absolute;
-            top: -8px;
-            left: 0;
-            transform: scale(0.75);
-            transform-origin: top left;
-            border: none;
         }
 
         .download-btn {
@@ -322,7 +307,7 @@
                 </div>
             </div>
 
-            <!-- Compact Background Audio Bar for PDF reading -->
+            <!-- Compact Native Audio Player Bar for PDF reading -->
             <div class="audio-player-container" id="audioSection" style="display: none;">
                 <div class="audio-player-header">
                     <span>🎵 اختر تسجيلاً صوتياً للاستماع أثناء القراءة:</span>
@@ -330,9 +315,7 @@
                 <select id="audioSelector" onchange="changeAudioSource(this.value)">
                     <option value="">اختر التسجيل الصوتي...</option>
                 </select>
-                <div class="audio-frame-wrapper" id="audioFrameWrapper">
-                    <iframe id="audioIframe" src=""></iframe>
-                </div>
+                <audio id="audioElement" controls></audio>
             </div>
 
             <iframe id="contentViewer" src=""></iframe>
@@ -456,12 +439,12 @@
 
             const contentViewer = document.getElementById('contentViewer');
             const audioSection = document.getElementById('audioSection');
-            const audioIframe = document.getElementById('audioIframe');
-            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
+            const audioElement = document.getElementById('audioElement');
 
             // Reset audio player state
-            audioIframe.src = '';
-            audioFrameWrapper.style.display = 'none';
+            audioElement.pause();
+            audioElement.src = '';
+            audioElement.style.display = 'none';
 
             if (isAudio) {
                 // Standalone Audio Play Mode: Use full Google Drive preview iframe for single audio selection
@@ -490,14 +473,17 @@
         }
 
         function changeAudioSource(audioId) {
-            const audioIframe = document.getElementById('audioIframe');
-            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
+            const audioElement = document.getElementById('audioElement');
             if (audioId) {
-                audioIframe.src = `https://drive.google.com/file/d/${audioId}/preview`;
-                audioFrameWrapper.style.display = 'block';
+                // Using direct download URL for native HTML5 audio playback compatibility
+                audioElement.src = `https://drive.google.com/uc?export=download&id=${audioId}`;
+                audioElement.style.display = 'block';
+                audioElement.load();
+                audioElement.play().catch(e => console.log("Playback prevented:", e));
             } else {
-                audioIframe.src = '';
-                audioFrameWrapper.style.display = 'none';
+                audioElement.pause();
+                audioElement.style.display = 'none';
+                audioElement.src = '';
             }
         }
 
@@ -508,10 +494,10 @@
             const contentViewer = document.getElementById('contentViewer');
             contentViewer.src = '';
 
-            const audioIframe = document.getElementById('audioIframe');
-            audioIframe.src = '';
-            const audioFrameWrapper = document.getElementById('audioFrameWrapper');
-            audioFrameWrapper.style.display = 'none';
+            const audioElement = document.getElementById('audioElement');
+            audioElement.pause();
+            audioElement.src = '';
+            audioElement.style.display = 'none';
         }
 
         window.onload = function() {
