@@ -220,12 +220,6 @@
             color: var(--text-main);
         }
 
-        .audio-player-container audio {
-            width: 100%;
-            height: 36px;
-            outline: none;
-        }
-
         .download-btn {
             background: #16a34a;
             color: #ffffff;
@@ -306,18 +300,19 @@
                 </div>
             </div>
 
-            <!-- Background Audio Selector Bar inside Viewer (Only for PDF background play) -->
+            <!-- Background Audio Selector Bar inside Viewer (Only shows when reading a PDF and folder has audio files) -->
             <div class="audio-player-container" id="audioSection" style="display: none;">
-                <div class="audio-player-header" id="dropdownHeader">
+                <div class="audio-player-header">
                     <span>🎵 التسجيلات الصوتية المتاحة للاستماع أثناء القراءة:</span>
                 </div>
                 <select id="audioSelector" onchange="changeAudioSource(this.value)">
                     <option value="">اختر التسجيل الصوتي...</option>
                 </select>
-                <audio id="audioElement" controls style="display: none;"></audio>
+                <!-- Google Drive audio player preview iframe -->
+                <iframe id="audioIframe" src="" style="width: 100%; height: 75px; border: none; display: none; border-radius: 6px; margin-top: 4px;"></iframe>
             </div>
 
-            <iframe id="contentViewer" src="" style="display: none;"></iframe>
+            <iframe id="contentViewer" src=""></iframe>
         </div>
     </div>
 
@@ -438,36 +433,28 @@
 
             const contentViewer = document.getElementById('contentViewer');
             const audioSection = document.getElementById('audioSection');
-            const dropdownHeader = document.getElementById('dropdownHeader');
-            const audioSelector = document.getElementById('audioSelector');
-            const audioElement = document.getElementById('audioElement');
+            const audioIframe = document.getElementById('audioIframe');
 
-            // Reset background audio
-            audioElement.pause();
-            audioElement.src = '';
+            // Reset audio iframe
+            audioIframe.src = '';
+            audioIframe.style.display = 'none';
 
             if (isAudio) {
-                // Standalone Audio Play Mode (Open Google Drive native audio player preview in iframe)
+                // Standalone Audio Play Mode: Hide background dropdown and show native audio preview
                 audioSection.style.display = 'none';
                 contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
-                contentViewer.style.display = 'block';
             } else {
                 // PDF Document View Mode
                 contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
-                contentViewer.style.display = 'block';
 
-                // Check if folder contains audio files to offer background playback options
+                // Show background audio bar if audio files exist in the current folder
                 if (currentFolderAudioFiles.length > 0) {
                     audioSection.style.display = 'flex';
-                    dropdownHeader.style.display = 'flex';
-                    audioSelector.style.display = 'block';
-
                     let optionsHtml = '<option value="">🎵 اختر التسجيل الصوتي للاستماع أثناء القراءة...</option>';
                     currentFolderAudioFiles.forEach(audioFile => {
                         optionsHtml += `<option value="${audioFile.id}">${audioFile.name}</option>`;
                     });
-                    audioSelector.innerHTML = optionsHtml;
-                    audioElement.style.display = 'none';
+                    document.getElementById('audioSelector').innerHTML = optionsHtml;
                 } else {
                     audioSection.style.display = 'none';
                 }
@@ -479,16 +466,13 @@
         }
 
         function changeAudioSource(audioId) {
-            const audioElement = document.getElementById('audioElement');
+            const audioIframe = document.getElementById('audioIframe');
             if (audioId) {
-                // Using direct streaming endpoint to bypass virus-scan interstitial pages
-                audioElement.src = `https://lh3.googleusercontent.com/d/${audioId}`;
-                audioElement.style.display = 'block';
-                audioElement.play().catch(e => console.log("Playback prevented:", e));
+                audioIframe.src = `https://drive.google.com/file/d/${audioId}/preview`;
+                audioIframe.style.display = 'block';
             } else {
-                audioElement.pause();
-                audioElement.style.display = 'none';
-                audioElement.src = '';
+                audioIframe.src = '';
+                audioIframe.style.display = 'none';
             }
         }
 
@@ -499,9 +483,9 @@
             const contentViewer = document.getElementById('contentViewer');
             contentViewer.src = '';
 
-            const audioElement = document.getElementById('audioElement');
-            audioElement.pause();
-            audioElement.src = '';
+            const audioIframe = document.getElementById('audioIframe');
+            audioIframe.src = '';
+            audioIframe.style.display = 'none';
         }
 
         window.onload = function() {
