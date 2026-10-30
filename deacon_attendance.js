@@ -5,6 +5,28 @@ let globalRows = [];
 let activeFilters = {}; 
 let activeSort = { colIndex: null, direction: 'asc' };
 
+// --- Theme Toggle Logic ---
+function updateThemeIcon() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+        btn.innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('deacon_theme', newTheme);
+    updateThemeIcon();
+}
+
+// Initialize theme icon on load
+window.addEventListener('DOMContentLoaded', () => {
+    updateThemeIcon();
+});
+
 async function authenticate() {
     const inputPass = document.getElementById('passwordInput').value.trim();
     const authError = document.getElementById('authError');
