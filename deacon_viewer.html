@@ -220,10 +220,10 @@
             color: var(--text-main);
         }
 
-        /* Lightly cropped iframe wrapper to keep player fully interactive */
+        /* Adjusted iframe wrapper to crop out the bottom margin completely */
         .audio-frame-wrapper {
             width: 100%;
-            height: 90px;
+            height: 52px;
             overflow: hidden;
             border-radius: 6px;
             position: relative;
@@ -233,9 +233,9 @@
 
         .audio-frame-wrapper iframe {
             width: 100%;
-            height: 200px;
+            height: 180px;
             position: absolute;
-            top: -55px;
+            top: -24px;
             left: 0;
             border: none;
         }
@@ -320,7 +320,7 @@
                 </div>
             </div>
 
-            <!-- Lightly cropped Google Drive preview iframe for background audio playback -->
+            <!-- Centered & bottom-cropped Google Drive audio player bar -->
             <div class="audio-player-container" id="audioSection" style="display: none;">
                 <div class="audio-player-header">
                     <span>🎵 اختر تسجيلاً صوتياً للاستماع أثناء القراءة:</span>
