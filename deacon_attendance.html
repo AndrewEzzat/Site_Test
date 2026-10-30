@@ -6,13 +6,21 @@
     <title>سجل الحضور والغياب - مدرسة الشمامسة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="deacon_attendance.css">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('deacon_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
 </head>
 <body>
 
     <div class="header">
         <a href="deacons.html" class="back-btn">⬅ عودة</a>
         <h2>سجل الحضور والغياب</h2>
-        <div style="width: 40px;"></div>
+        <div class="header-actions">
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="تغيير المظهر">🌙</button>
+        </div>
     </div>
 
     <div class="container">
