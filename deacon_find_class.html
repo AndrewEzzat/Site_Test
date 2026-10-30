@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>معرفة الفصل - مدرسة الشمامسة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --header-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --primary: #3b82f6;
+            --primary-light: #1e3a8a;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --header-bg: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: var(--header-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .back-btn {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            font-weight: 600;
+            font-size: 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .header h2 {
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .theme-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 5px 9px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 24px auto;
+            padding: 0 16px;
+            width: 100%;
+            flex: 1;
+        }
+
+        .search-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .search-card h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: var(--primary);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 10px 14px;
+            font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            background: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .search-box button {
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .result-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-info h4 {
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .result-info span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .category-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .loading-msg, .no-results {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+            padding: 20px;
+        }
+    </style>
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('deacon_theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+</head>
+<body>
+
+    <div class="header">
+        <a href="deacons.html" class="back-btn">⬅ عودة</a>
+        <h2>معرفة الفصل</h2>
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+    </div>
+
+    <div class="container">
+        <div class="search-card">
+            <h3>🔍 ابحث عن اسم الشماس</h3>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ادخل الاسم هنا..." onkeydown="if(event.key==='Enter') searchDeacon()">
+                <button onclick="searchDeacon()">بحث</button>
+            </div>
+        </div>
+
+        <div id="statusMsg"></div>
+        <div class="results-container" id="resultsContainer"></div>
+    </div>
+
+    <script src="deacons-config.js"></script>
+    <script>
+        function updateThemeIcon() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) btn.innerText = currentTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('deacon_theme', newTheme);
+            updateThemeIcon();
+        }
+
+        async function searchDeacon() {
+            const query = document.getElementById('searchInput').value.trim();
+            const resultsContainer = document.getElementById('resultsContainer');
+            const statusMsg = document.getElementById('statusMsg');
+
+            if (!query) return;
+
+            statusMsg.innerHTML = '<p class="loading-msg">جاري البحث في الفصول...</p>';
+            resultsContainer.innerHTML = '';
+
+            try {
+                const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=searchDeaconClass&name=${encodeURIComponent(query)}`);
+                const data = await response.json();
+
+                statusMsg.innerHTML = '';
+
+                if (data.status === 'success' && data.results.length > 0) {
+                    let html = '';
+                    data.results.forEach(item => {
+                        html += `
+                            <div class="result-item">
+                                <div class="result-info">
+                                    <h4>${item.matchedName}</h4>
+                                    <span>الفصل: <strong>${item.className}</strong></span>
+                                </div>
+                                <span class="category-badge">${item.category}</span>
+                            </div>
+                        `;
+                    });
+                    resultsContainer.innerHTML = html;
+                } else {
+                    statusMsg.innerHTML = '<p class="no-results">لم يتم العثور على نتائج لهذا الاسم.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                statusMsg.innerHTML = '<p class="no-results">حدث خطأ أثناء البحث. يرجى المحاولة لاحقاً.</p>';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+        });
+    </script>
+</body>
+</html>
