@@ -100,6 +100,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
             text-align: center;
             margin-bottom: 20px;
+            position: relative;
         }
 
         .search-card h3 {
@@ -111,6 +112,7 @@
         .search-box {
             display: flex;
             gap: 8px;
+            position: relative;
         }
 
         .search-box input {
@@ -122,6 +124,35 @@
             outline: none;
             background: var(--bg-color);
             color: var(--text-main);
+        }
+
+        /* Dropdown suggestions styling */
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            left: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+            text-align: right;
+        }
+
+        .suggestion-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .suggestion-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
         }
 
         .search-box button {
@@ -197,7 +228,8 @@
         <div class="search-card">
             <h3>🔍 ابحث عن اسم الشماس</h3>
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="ادخل الاسم هنا..." onkeydown="if(event.key==='Enter') searchDeacon()">
+                <input type="text" id="searchInput" placeholder="اكتب الاسم الأول أو جزءاً منه..." oninput="handleTyping()" onkeydown="if(event.key==='Enter') searchDeacon()">
+                <div id="suggestionsDropdown" class="suggestions-dropdown"></div>
                 <button onclick="searchDeacon()">بحث</button>
             </div>
         </div>
@@ -222,14 +254,61 @@
             updateThemeIcon();
         }
 
+        let typingTimer;
+        async function handleTyping() {
+            clearTimeout(typingTimer);
+            const query = document.getElementById('searchInput').value.trim();
+            const dropdown = document.getElementById('suggestionsDropdown');
+
+            if (query.length < 2) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            typingTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch(`${DEACON_CONFIG.WEB_APP_URL}?action=getDeaconSuggestions&query=${encodeURIComponent(query)}`);
+                    const data = await response.json();
+
+                    if (data.status === 'success' && data.suggestions.length > 0) {
+                        let html = '';
+                        data.suggestions.forEach(name => {
+                            html += `<div class="suggestion-item" onclick="selectSuggestion('${name.replace(/'/g, "\\'")}')">${name}</div>`;
+                        });
+                        dropdown.innerHTML = html;
+                        dropdown.style.display = 'block';
+                    } else {
+                        dropdown.style.display = 'none';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    dropdown.style.display = 'none';
+                }
+            }, 300); // 300ms debounce delay
+        }
+
+        function selectSuggestion(name) {
+            document.getElementById('searchInput').value = name;
+            document.getElementById('suggestionsDropdown').style.display = 'none';
+            searchDeacon(); // Automatically execute search when name is picked
+        }
+
+        // Hide dropdown when clicking outside
+        window.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-box')) {
+                document.getElementById('suggestionsDropdown').style.display = 'none';
+            }
+        });
+
         async function searchDeacon() {
             const query = document.getElementById('searchInput').value.trim();
             const resultsContainer = document.getElementById('resultsContainer');
             const statusMsg = document.getElementById('statusMsg');
+            document.getElementById('suggestionsDropdown').style.display = 'none';
 
             if (!query) return;
 
-            statusMsg.innerHTML = '<p class="loading-msg">جاري البحث في الفصول...</p>';
+            statusMsg.innerHTML = '<p class="loading-msg">جاري البحث...</p>';
             resultsContainer.innerHTML = '';
 
             try {
@@ -247,7 +326,7 @@
                                     <h4>${item.matchedName}</h4>
                                     <span>الفصل: <strong>${item.className}</strong></span>
                                 </div>
-                                <span class="category-badge">${item.category}</span>
+                                <span class="category-badge">مدرسة الشمامسة</span>
                             </div>
                         `;
                     });
