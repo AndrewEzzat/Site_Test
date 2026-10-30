@@ -306,18 +306,18 @@
                 </div>
             </div>
 
-            <!-- Audio Player Bar inside Viewer -->
+            <!-- Background Audio Selector Bar inside Viewer (Only for PDF background play) -->
             <div class="audio-player-container" id="audioSection" style="display: none;">
-                <div class="audio-player-header">
-                    <span>🎵 التسجيلات الصوتية المتاحة:</span>
+                <div class="audio-player-header" id="dropdownHeader">
+                    <span>🎵 التسجيلات الصوتية المتاحة للاستماع أثناء القراءة:</span>
                 </div>
                 <select id="audioSelector" onchange="changeAudioSource(this.value)">
-                    <option value="">اختر الملف الصوتي...</option>
+                    <option value="">اختر التسجيل الصوتي...</option>
                 </select>
                 <audio id="audioElement" controls style="display: none;"></audio>
             </div>
 
-            <iframe id="pdfViewer" src="" style="display: none;"></iframe>
+            <iframe id="contentViewer" src="" style="display: none;"></iframe>
         </div>
     </div>
 
@@ -436,39 +436,38 @@
             const downloadBtn = document.getElementById('downloadLink');
             downloadBtn.href = `https://drive.google.com/uc?export=download&id=${fileId}`;
 
-            const pdfViewer = document.getElementById('pdfViewer');
+            const contentViewer = document.getElementById('contentViewer');
             const audioSection = document.getElementById('audioSection');
+            const dropdownHeader = document.getElementById('dropdownHeader');
             const audioSelector = document.getElementById('audioSelector');
             const audioElement = document.getElementById('audioElement');
 
-            if (isAudio) {
-                // Play single audio file mode
-                pdfViewer.style.display = 'none';
-                pdfViewer.src = '';
+            // Reset background audio
+            audioElement.pause();
+            audioElement.src = '';
 
-                audioSection.style.display = 'flex';
-                audioSelector.style.display = 'none'; // Hide selector for single file
-                
-                audioElement.style.display = 'block';
-                audioElement.src = `https://docs.google.com/uc?export=open&id=${fileId}`;
-                audioElement.play().catch(() => {});
+            if (isAudio) {
+                // Standalone Audio Play Mode (Open Google Drive native audio player preview in iframe)
+                audioSection.style.display = 'none';
+                contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
+                contentViewer.style.display = 'block';
             } else {
                 // PDF Document View Mode
-                pdfViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
-                pdfViewer.style.display = 'block';
+                contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
+                contentViewer.style.display = 'block';
 
-                // Check if current folder has MP3/Audio files to present player alongside PDF
+                // Check if folder contains audio files to offer background playback options
                 if (currentFolderAudioFiles.length > 0) {
                     audioSection.style.display = 'flex';
+                    dropdownHeader.style.display = 'flex';
                     audioSelector.style.display = 'block';
 
-                    let optionsHtml = '<option value="">🎵 اختر التسجيل الصوتي للاستماع...</option>';
+                    let optionsHtml = '<option value="">🎵 اختر التسجيل الصوتي للاستماع أثناء القراءة...</option>';
                     currentFolderAudioFiles.forEach(audioFile => {
                         optionsHtml += `<option value="${audioFile.id}">${audioFile.name}</option>`;
                     });
                     audioSelector.innerHTML = optionsHtml;
                     audioElement.style.display = 'none';
-                    audioElement.src = '';
                 } else {
                     audioSection.style.display = 'none';
                 }
@@ -482,9 +481,10 @@
         function changeAudioSource(audioId) {
             const audioElement = document.getElementById('audioElement');
             if (audioId) {
-                audioElement.src = `https://docs.google.com/uc?export=open&id=${audioId}`;
+                // Using direct streaming endpoint to bypass virus-scan interstitial pages
+                audioElement.src = `https://lh3.googleusercontent.com/d/${audioId}`;
                 audioElement.style.display = 'block';
-                audioElement.play().catch(() => {});
+                audioElement.play().catch(e => console.log("Playback prevented:", e));
             } else {
                 audioElement.pause();
                 audioElement.style.display = 'none';
@@ -496,8 +496,8 @@
             const viewerCard = document.getElementById('viewerCard');
             viewerCard.style.display = 'none';
 
-            const pdfViewer = document.getElementById('pdfViewer');
-            pdfViewer.src = '';
+            const contentViewer = document.getElementById('contentViewer');
+            contentViewer.src = '';
 
             const audioElement = document.getElementById('audioElement');
             audioElement.pause();
