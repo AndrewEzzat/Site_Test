@@ -189,35 +189,41 @@
             white-space: nowrap;
         }
 
-        /* Audio Selector Bar inside Viewer */
+        /* Compact Audio Player Bar inside Viewer */
         .audio-player-container {
             background: #f8fafc;
             border-bottom: 1px solid var(--border);
-            padding: 10px 14px;
+            padding: 8px 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .audio-player-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: var(--primary);
         }
 
         .audio-player-container select {
             width: 100%;
-            padding: 6px 10px;
-            font-size: 12px;
+            padding: 5px 8px;
+            font-size: 11px;
             font-family: 'Cairo', sans-serif;
             border: 1px solid var(--border);
             border-radius: 6px;
             outline: none;
             background: #ffffff;
             color: var(--text-main);
+        }
+
+        .audio-player-container audio {
+            width: 100%;
+            height: 32px;
+            outline: none;
         }
 
         .download-btn {
@@ -247,7 +253,7 @@
         iframe { 
             width: 100%; 
             flex: 1; 
-            min-height: 55vh;
+            min-height: 60vh;
             border: none; 
         }
 
@@ -300,16 +306,15 @@
                 </div>
             </div>
 
-            <!-- Background Audio Selector Bar inside Viewer (Only shows when reading a PDF and folder has audio files) -->
+            <!-- Compact Background Audio Bar for PDF reading -->
             <div class="audio-player-container" id="audioSection" style="display: none;">
                 <div class="audio-player-header">
-                    <span>🎵 التسجيلات الصوتية المتاحة للاستماع أثناء القراءة:</span>
+                    <span>🎵 اختر تسجيلاً صوتياً للاستماع أثناء القراءة:</span>
                 </div>
                 <select id="audioSelector" onchange="changeAudioSource(this.value)">
                     <option value="">اختر التسجيل الصوتي...</option>
                 </select>
-                <!-- Google Drive audio player preview iframe -->
-                <iframe id="audioIframe" src="" style="width: 100%; height: 75px; border: none; display: none; border-radius: 6px; margin-top: 4px;"></iframe>
+                <audio id="audioElement" controls style="display: none;"></audio>
             </div>
 
             <iframe id="contentViewer" src=""></iframe>
@@ -433,24 +438,25 @@
 
             const contentViewer = document.getElementById('contentViewer');
             const audioSection = document.getElementById('audioSection');
-            const audioIframe = document.getElementById('audioIframe');
+            const audioElement = document.getElementById('audioElement');
 
-            // Reset audio iframe
-            audioIframe.src = '';
-            audioIframe.style.display = 'none';
+            // Reset audio player state
+            audioElement.pause();
+            audioElement.src = '';
+            audioElement.style.display = 'none';
 
             if (isAudio) {
-                // Standalone Audio Play Mode: Hide background dropdown and show native audio preview
+                // Standalone Audio Play Mode: Use full Google Drive preview iframe for single audio selection
                 audioSection.style.display = 'none';
                 contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
             } else {
                 // PDF Document View Mode
                 contentViewer.src = `https://drive.google.com/file/d/${fileId}/preview`;
 
-                // Show background audio bar if audio files exist in the current folder
+                // Show compact audio bar if audio files exist in the current folder
                 if (currentFolderAudioFiles.length > 0) {
                     audioSection.style.display = 'flex';
-                    let optionsHtml = '<option value="">🎵 اختر التسجيل الصوتي للاستماع أثناء القراءة...</option>';
+                    let optionsHtml = '<option value="">🎵 اختر التسجيل الصوتي...</option>';
                     currentFolderAudioFiles.forEach(audioFile => {
                         optionsHtml += `<option value="${audioFile.id}">${audioFile.name}</option>`;
                     });
@@ -466,13 +472,16 @@
         }
 
         function changeAudioSource(audioId) {
-            const audioIframe = document.getElementById('audioIframe');
+            const audioElement = document.getElementById('audioElement');
             if (audioId) {
-                audioIframe.src = `https://drive.google.com/file/d/${audioId}/preview`;
-                audioIframe.style.display = 'block';
+                // Direct stream endpoint to make native browser audio player instantly active and playable
+                audioElement.src = `https://lh3.googleusercontent.com/d/${audioId}`;
+                audioElement.style.display = 'block';
+                audioElement.play().catch(e => console.log("Playback prevented:", e));
             } else {
-                audioIframe.src = '';
-                audioIframe.style.display = 'none';
+                audioElement.pause();
+                audioElement.style.display = 'none';
+                audioElement.src = '';
             }
         }
 
@@ -483,9 +492,10 @@
             const contentViewer = document.getElementById('contentViewer');
             contentViewer.src = '';
 
-            const audioIframe = document.getElementById('audioIframe');
-            audioIframe.src = '';
-            audioIframe.style.display = 'none';
+            const audioElement = document.getElementById('audioElement');
+            audioElement.pause();
+            audioElement.src = '';
+            audioElement.style.display = 'none';
         }
 
         window.onload = function() {
